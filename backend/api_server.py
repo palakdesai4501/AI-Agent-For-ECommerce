@@ -16,8 +16,13 @@ app = Flask(__name__)
 
 # Configurable CORS origins (comma-separated). Defaults to localhost for dev.
 cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
-cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
-CORS(app, origins=cors_origins)
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+else:
+    cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+# More permissive CORS for deployment
+CORS(app, origins=cors_origins, supports_credentials=True)
 
 # Initialize the agent
 agent = AgentAPI()
