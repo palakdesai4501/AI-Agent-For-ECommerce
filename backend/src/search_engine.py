@@ -56,9 +56,9 @@ class SearchEngine:
             Dictionary with search results and metadata
         """
         try:
-            # Step 1: Analyze search intent with AI
-            print(f"🔍 Analyzing search intent for: '{query}'")
-            refined_query = b.AnalyzeSearchIntent(query)
+            # Step 1: Use refined query passed from entrypoint (already refined upstream)
+            print(f"🔍 Using search query: '{query}'")
+            refined_query = query
             print(f"📝 Refined query: '{refined_query}'")
             
             # Step 2: Vector similarity search
@@ -110,56 +110,8 @@ class SearchEngine:
                     enriched_results.append(fallback_product)
             
             # Step 4: AI-powered reranking and recommendations
+            # Step 3b: Optionally AI rerank - disabled (handled upstream by intent refinement)
             final_results = enriched_results[:top_k]
-            
-            if use_ai_reranking and enriched_results:
-                print("🤖 Generating AI-powered recommendations...")
-                
-                # Prepare product data for AI analysis
-                products_for_ai = json.dumps([
-                    {
-                        'id': p['id'],
-                        'title': p['title'],
-                        'description': p.get('description', '')[:200],
-                        'category': p['category'],
-                        'price': p['price'],
-                        'rating': p['rating'],
-                        'rating_count': p['rating_count'],
-                        'similarity_score': p['similarity_score']
-                    }
-                    for p in enriched_results[:15]  # Send top 15 for AI analysis
-                ], indent=2)
-                
-                # Prepare filters for AI
-                filters_for_ai = json.dumps(filters) if filters else None
-                
-                try:
-                    # Get AI recommendations
-                    ai_recommendations = b.GenerateProductRecommendations(
-                        query, 
-                        products_for_ai,
-                        filters_for_ai
-                    )
-                    
-                    # Map AI recommendations back to our products
-                    ai_product_map = {rec.product_id: rec for rec in ai_recommendations}
-                    
-                    # Rerank based on AI recommendations
-                    reranked_results = []
-                    for product in enriched_results:
-                        if product['id'] in ai_product_map:
-                            ai_rec = ai_product_map[product['id']]
-                            product['ai_relevance_score'] = ai_rec.relevance_score
-                            product['ai_recommendation_reason'] = ai_rec.reason
-                            reranked_results.append(product)
-                    
-                    # Sort by AI relevance score
-                    reranked_results.sort(key=lambda x: x.get('ai_relevance_score', 0), reverse=True)
-                    final_results = reranked_results[:top_k]
-                    
-                except Exception as e:
-                    print(f"⚠️ AI reranking failed, using vector similarity results: {e}")
-                    final_results = enriched_results[:top_k]
             
             return {
                 'query': query,
