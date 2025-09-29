@@ -214,8 +214,3 @@ data/*.avi
 # Processed data files (can be regenerated)
 data/processed_products.json
 !data/processed_products.json.example
-
-
-# Keep essential data files
-!data/*.json
-!data/processed_products.json.example
