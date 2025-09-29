@@ -19,7 +19,7 @@ class ConversationalAgent:
         """Initialize the conversational agent with search capabilities."""
         # Use correct data path when running from backend directory
         import os
-        data_path = os.path.join('..', 'data', 'processed_products.json')
+        data_path = os.path.join('data', 'processed_products.json')
         self.search_engine = SearchEngine(data_path)
         
         # Initialize Gemini for image analysis

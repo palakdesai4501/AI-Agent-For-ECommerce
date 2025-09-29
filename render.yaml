@@ -12,5 +12,5 @@ services:
       - key: PINECONE_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        value: https://your-frontend-domain.vercel.app
+        value: "*"
 
