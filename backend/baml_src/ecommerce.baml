@@ -94,6 +94,15 @@ function HandleUserQuery(input: UserQueryInput) -> AgentDirective {
     - For PRODUCT_RECOMMENDATION: create a refined_query that captures product type,
       key attributes, and any implicit constraints. Keep it short.
 
+    STRICT AVAILABILITY / NO FABRICATION POLICY:
+    - Never invent or imply availability of items that are not in the catalog.
+    - Preserve hard constraints in the refined_query (e.g., color, brand, model, size, material).
+    - Do not relax hard constraints unless the user explicitly permits alternatives.
+    - If the query is "Recommend me red tshirt" and the catalog has no red t-shirts,
+      keep the refined_query strict (e.g., "red t-shirt") so downstream search can return no results.
+      The system should then clearly say no matching products were found rather than suggesting other colors.
+    - When unsure between multiple interpretations, prefer the one that does not over-claim availability.
+
     Input:
     message: "{{ input.user_message }}"
     has_image: {{ input.has_image }}
@@ -111,7 +120,11 @@ function ExplainRecommendation(
 ) -> string {
   client Gemini
   prompt #"
-    Explain why this product is a good match for the user's search:
+    Explain why this product is a good match for the user's search.
+    USE ONLY the information present in Product. Do not assume brand, color,
+    availability, or features that are not explicitly provided.
+    If the product does not clearly satisfy key constraints in the User Query
+    (e.g., color, size, model), state that directly and avoid claiming it does.
     
     User Query: "{{user_query}}"
     Product: {{product}}
@@ -122,5 +135,6 @@ function ExplainRecommendation(
     3. Value proposition
     
     Keep the explanation conversational and helpful, like a knowledgeable sales assistant.
+    Be precise and do not fabricate details beyond the provided Product fields.
   "#
 }

@@ -61,12 +61,15 @@ class SearchEngine:
             refined_query = query
             print(f"📝 Refined query: '{refined_query}'")
             
-            # Step 2: Vector similarity search
+            # Step 2: Build filters (support price_bucket if provided)
+            pinecone_filters = filters or {}
+            
+            # Step 2b: Vector similarity search
             print("🔎 Performing vector similarity search...")
             similar_products = self.vector_store.search_similar_products(
                 refined_query,
                 top_k=top_k * 2,  # Get more results for AI filtering
-                filters=filters
+                filters=pinecone_filters
             )
             print(f"🎯 Vector search found {len(similar_products)} similar products")
             
@@ -82,28 +85,25 @@ class SearchEngine:
             # Step 3: Enrich with full product data
             enriched_results = []
             for product_meta, similarity_score in similar_products:
-                product_id = None
-                
-                # Find product ID from metadata or search in our data
-                for pid, pdata in self.products_data.items():
-                    if pdata['title'] == product_meta['title']:
-                        product_id = pid
-                        break
-                
+                product_id = product_meta.get('product_id')
+
                 if product_id and product_id in self.products_data:
                     full_product = self.products_data[product_id].copy()
                     full_product['similarity_score'] = similarity_score
+                    # ensure image_url is present
+                    if 'image_url' not in full_product and product_meta.get('image_url'):
+                        full_product['image_url'] = product_meta.get('image_url')
                     enriched_results.append(full_product)
                 else:
                     # Fallback: use metadata from vector store
                     fallback_product = {
-                        'id': f"unknown_{len(enriched_results)}",
+                        'id': product_id or f"unknown_{len(enriched_results)}",
                         'title': product_meta['title'],
                         'category': product_meta['category'],
                         'price': product_meta['price'] if product_meta['price'] > 0 else None,
                         'rating': product_meta['rating'] if product_meta['rating'] > 0 else None,
                         'rating_count': product_meta['rating_count'],
-                        'image_url': product_meta['image_url'],
+                        'image_url': product_meta.get('image_url'),
                         'similarity_score': similarity_score,
                         'description': f"Product from {product_meta['category']} category"
                     }
@@ -148,12 +148,17 @@ class SearchEngine:
             
             product = self.products_data[product_id]
             product_info = json.dumps({
-                'title': product['title'],
+                'id': product.get('id'),
+                'title': product.get('title'),
                 'description': product.get('description', ''),
-                'category': product['category'],
-                'price': product['price'],
-                'rating': product['rating'],
-                'features': product.get('features', [])[:5]  # Limit features
+                'category': product.get('category'),
+                'subcategories': product.get('subcategories', []),
+                'price': product.get('price'),
+                'rating': product.get('rating'),
+                'rating_count': product.get('rating_count'),
+                'store': product.get('store'),
+                'image_url': product.get('image_url'),
+                'features': product.get('features', [])[:5]
             }, indent=2)
             
             explanation = b.ExplainRecommendation(product_info, user_query)

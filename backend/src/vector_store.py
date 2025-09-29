@@ -13,9 +13,11 @@ class VectorStore:
     """
     
     def __init__(self, 
-                 index_name: str = "amazon-products-search",
+                 index_name: str = "amazon-products-test1",
                  dimension: int = 384,
-                 metric: str = "cosine"):
+                 metric: str = "cosine",
+                 upsert_batch_size: int = 100,
+                 embed_batch_size: int = 64):
         """
         Initialize vector store with Pinecone.
         
@@ -27,6 +29,8 @@ class VectorStore:
         self.index_name = index_name
         self.dimension = dimension
         self.metric = metric
+        self.upsert_batch_size = upsert_batch_size
+        self.embed_batch_size = embed_batch_size
         
         # Initialize embedding model
         print("Loading embedding model...")
@@ -85,8 +89,94 @@ class VectorStore:
             Numpy array of embeddings
         """
         print(f"Creating embeddings for {len(texts)} texts...")
-        embeddings = self.embedding_model.encode(texts, show_progress_bar=True)
+        embeddings = self.embedding_model.encode(texts, show_progress_bar=True, batch_size=self.embed_batch_size)
         return embeddings
+
+    @staticmethod
+    def _price_bucket(price: Optional[float]) -> int:
+        """Compute coarse price bucket for filtering and sorting."""
+        if price is None or price <= 0:
+            return -1
+        if price < 10:
+            return 0
+        if price < 25:
+            return 1
+        if price < 50:
+            return 2
+        if price < 100:
+            return 3
+        return 4
+
+    def _build_views_for_product(self, product: Dict) -> List[Dict]:
+        """
+        Construct multiple short views per product to improve recall without heavy chunking.
+        Returns a list of dicts: { 'id', 'text', 'metadata' }
+        """
+        product_id = product.get('id')
+        title = product.get('title') or ''
+        description = product.get('description') or ''
+        category = product.get('category') or ''
+        subcategories = product.get('subcategories') or []
+        store = product.get('store') or ''
+        price = product.get('price')
+        rating = product.get('rating')
+        rating_count = product.get('rating_count') or 0
+        features = product.get('features') or []
+        image_url = product.get('image_url') or ''
+
+        taxonomy = " > ".join([category] + subcategories) if subcategories else category
+
+        # View A: title + key features (short)
+        view_a_text = "\n".join([
+            f"Title: {title}",
+            f"Brand/Store: {store}",
+            f"Category: {taxonomy}",
+            f"Key features: {', '.join(features[:6])}" if features else ""
+        ]).strip()
+
+        # View B: title + short description snippet
+        desc_snippet = description[:600]
+        view_b_text = "\n".join([
+            f"Title: {title}",
+            f"Use-case: {desc_snippet}"
+        ]).strip()
+
+        # Optionally view C from search_text if present
+        search_text = product.get('search_text') or ''
+        views: List[Dict] = []
+        base_metadata = {
+            'product_id': product_id,
+            'view': '',
+            'title': title[:200],
+            'category': category,
+            'subcategories': subcategories,
+            'store': store[:100],
+            'price': price if price is not None else 0.0,
+            'price_bucket': self._price_bucket(price if isinstance(price, (int, float)) else None),
+            'rating': rating if rating is not None else 0.0,
+            'rating_count': rating_count,
+            'image_url': image_url
+        }
+
+        views.append({
+            'id': f"{product_id}#A",
+            'text': view_a_text,
+            'metadata': {**base_metadata, 'view': 'A'}
+        })
+        views.append({
+            'id': f"{product_id}#B",
+            'text': view_b_text,
+            'metadata': {**base_metadata, 'view': 'B'}
+        })
+
+        if search_text:
+            views.append({
+                'id': f"{product_id}#C",
+                'text': f"Semantic keywords: {search_text[:1000]}",
+                'metadata': {**base_metadata, 'view': 'C'}
+            })
+
+        return views
     
     def upsert_products(self, products: List[Dict]) -> bool:
         """
@@ -100,50 +190,38 @@ class VectorStore:
         """
         try:
             print(f"Upserting {len(products)} products to Pinecone...")
-            
-            # Extract search texts for embeddings
-            search_texts = [product['search_text'] for product in products]
-            
-            # Create embeddings
-            embeddings = self.create_embeddings(search_texts)
-            
-            # Prepare vectors for upsert
+
+            # Build views
+            all_views: List[Dict] = []
+            for product in products:
+                all_views.extend(self._build_views_for_product(product))
+
+            # Prepare embedding texts
+            texts = [v['text'] for v in all_views]
+            embeddings = self.create_embeddings(texts)
+
             vectors_to_upsert = []
-            
-            for i, (product, embedding) in enumerate(zip(products, embeddings)):
-                # Create metadata (Pinecone has limits on metadata size)
-                metadata = {
-                    'title': product['title'][:200],  # Limit title length
-                    'category': product['category'],
-                    'price': product['price'] if product['price'] is not None else 0.0,
-                    'rating': product['rating'] if product['rating'] is not None else 0.0,
-                    'rating_count': product['rating_count'],
-                    'store': product['store'][:100] if product['store'] else "",
-                    'image_url': product['image_url'] if product['image_url'] else "",
-                    'filename': product['filename']
-                }
-                
-                vector = {
-                    'id': product['id'],
+            for view, embedding in zip(all_views, embeddings):
+                vectors_to_upsert.append({
+                    'id': view['id'],
                     'values': embedding.tolist(),
-                    'metadata': metadata
-                }
-                
-                vectors_to_upsert.append(vector)
-            
-            # Upsert in batches (Pinecone recommends batch size of 100)
-            batch_size = 100
-            for i in range(0, len(vectors_to_upsert), batch_size):
+                    'metadata': view['metadata']
+                })
+
+            # Upsert in batches
+            total = len(vectors_to_upsert)
+            batch_size = self.upsert_batch_size
+            for i in range(0, total, batch_size):
                 batch = vectors_to_upsert[i:i + batch_size]
                 self.index.upsert(vectors=batch)
-                print(f"Upserted batch {i//batch_size + 1}/{(len(vectors_to_upsert)-1)//batch_size + 1}")
+                print(f"Upserted batch {i//batch_size + 1}/{(total - 1)//batch_size + 1}")
             
             # Wait for all upserts to complete
             time.sleep(5)
             
             # Verify the upsert
             stats = self.index.describe_index_stats()
-            print(f"Index now contains {stats['total_vector_count']} vectors")
+            print(f"Index now contains {stats.get('total_vector_count', 'unknown')} vectors")
             
             return True
             
@@ -184,6 +262,13 @@ class VectorStore:
                         pinecone_filter['price'] = {'$lte': filters['max_price']}
                 if filters.get('min_rating') is not None:
                     pinecone_filter['rating'] = {'$gte': filters['min_rating']}
+                if filters.get('price_bucket') is not None:
+                    # allow single int or list
+                    pb = filters['price_bucket']
+                    if isinstance(pb, list):
+                        pinecone_filter['price_bucket'] = {'$in': pb}
+                    else:
+                        pinecone_filter['price_bucket'] = {'$eq': pb}
             
             # Query Pinecone
             query_params = {
@@ -196,15 +281,22 @@ class VectorStore:
                 query_params['filter'] = pinecone_filter
             
             results = self.index.query(**query_params)
-            
-            # Process results
-            products_with_scores = []
-            for match in results['matches']:
-                product_data = match['metadata']
-                similarity_score = match['score']
-                products_with_scores.append((product_data, similarity_score))
-            
-            return products_with_scores
+
+            # Collapse by product_id and keep best scoring view
+            best_by_product: Dict[str, Tuple[Dict, float]] = {}
+            for match in results.get('matches', []):
+                meta = match.get('metadata', {})
+                pid = meta.get('product_id')
+                score = match.get('score', 0.0)
+                if not pid:
+                    # Fallback: try to build a synthetic id from title
+                    pid = f"title::{meta.get('title', '')}"
+                if pid not in best_by_product or score > best_by_product[pid][1]:
+                    best_by_product[pid] = (meta, score)
+
+            # Sort by score and take top_k unique products
+            collapsed = sorted(best_by_product.values(), key=lambda x: x[1], reverse=True)[:top_k]
+            return collapsed
             
         except Exception as e:
             print(f"Error searching products: {e}")

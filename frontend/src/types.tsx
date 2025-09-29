@@ -7,6 +7,7 @@ export interface Product {
     rating?: number;
     rating_count?: number;
     image_url?: string;
+    product_url?: string;
     ai_relevance_score?: number;
     ai_recommendation_reason?: string;
     similarity_score?: number;

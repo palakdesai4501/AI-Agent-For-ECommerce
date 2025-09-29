@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFollowUp, products = [] }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,13 +74,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
       
       {/* Product Cards */}
       {products.length > 0 && (
-        <div className="mt-4">
+        <div className="mt-2">
         <div className="flex items-center mb-3">
-          <h3 className="text-sm font-semibold" style={{ color: '#000000' }}>Found Products</h3>
+          <h3 className="text-sm font-semibold mb-11" style={{ color: '#000000' }}>Found Products</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {products.slice(0, 5).map((product) => (
-            <FloatingProductCard key={product.id} product={product} />
+        <div className="grid grid-cols-1 gap-y-12 gap-x-4 sm:grid-cols-2 sm:gap-8 md:grid-cols-3 md:gap-6 overflow-visible px-1">
+          {products.slice(0, 3).map((product) => (
+            <FloatingProductCard key={product.id} product={product} onView={() => setSelectedProduct(product)} />
           ))}
         </div>
         </div>
@@ -97,6 +98,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
       )}
       
       <div ref={messagesEndRef} />
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedProduct(null)} />
+          <div className="relative glass-card rounded-xl p-4 w-full max-w-2xl mx-4" style={{ backgroundColor: '#F2F2F2', border: '1px solid #B6B09F' }}>
+            <button onClick={() => setSelectedProduct(null)} className="absolute right-3 top-3 text-sm px-2 py-1" style={{ color: '#000000', backgroundColor: '#EAE4D5', borderRadius: 6 }}>Close</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-lg overflow-hidden" style={{ backgroundColor: '#EAE4D5' }}>
+                {selectedProduct.image_url ? (
+                  <img src={selectedProduct.image_url} alt={selectedProduct.title} className="w-full h-64 object-cover" />
+                ) : (
+                  <div className="w-full h-64 flex items-center justify-center"><span>No image</span></div>
+                )}
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold mb-2" style={{ color: '#000000' }}>{selectedProduct.title}</h2>
+                <div className="text-sm mb-2" style={{ color: '#B6B09F' }}>{selectedProduct.category}</div>
+                {selectedProduct.price && (
+                  <div className="text-xl font-bold mb-3" style={{ color: '#000000' }}>${selectedProduct.price}</div>
+                )}
+                {selectedProduct.rating && (
+                  <div className="text-sm mb-2" style={{ color: '#000000' }}>Rating: {selectedProduct.rating}★</div>
+                )}
+                {selectedProduct.description && (
+                  <p className="text-sm mb-3" style={{ color: '#000000' }}>{selectedProduct.description}</p>
+                )}
+                <div className="flex gap-2">
+                  <a href={selectedProduct.product_url || selectedProduct.image_url || '#'} target="_blank" rel="noreferrer" className="btn-primary px-4 py-2 text-sm rounded-md">Open Link</a>
+                  <button onClick={() => setSelectedProduct(null)} className="btn-secondary px-4 py-2 text-sm rounded-md">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -193,18 +230,19 @@ const MessageBubble: React.FC<{
   );
 };
 
-const FloatingProductCard: React.FC<{ product: Product }> = ({ product }) => {
+const FloatingProductCard: React.FC<{ product: Product, onView: () => void }> = ({ product, onView }) => {
   return (
-    <div className="floating-card glass-card rounded-lg p-3 transition-all duration-200 shadow-lg hover:shadow-xl" style={{ 
+    <div className="relative floating-card glass-card rounded-xl p-4 transition-all duration-200 shadow-lg hover:shadow-2xl" style={{ 
       borderColor: '#B6B09F',
       backgroundColor: '#F2F2F2',
-      transform: 'translateY(-2px)'
+      transform: 'translateY(-2px)',
+      minHeight: 360
     }}>
       <div className="flex flex-col h-full">
-        {/* Product Image - Full size floating tile */}
-        <div className="relative mb-3">
+        {/* Product Image - pop outside card */}
+        <div className="relative -mt-10 mb-2 drop-shadow-xl">
           {product.image_url ? (
-            <div className="w-full h-32 rounded-lg overflow-hidden shadow-md">
+            <div className="w-full h-48 rounded-xl overflow-hidden">
               <img 
                 src={product.image_url} 
                 alt={product.title}
@@ -212,7 +250,7 @@ const FloatingProductCard: React.FC<{ product: Product }> = ({ product }) => {
               />
             </div>
           ) : (
-            <div className="w-full h-32 rounded-lg flex items-center justify-center shadow-md" style={{ backgroundColor: '#EAE4D5' }}>
+            <div className="w-full h-48 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EAE4D5' }}>
               <svg className="w-8 h-8" style={{ color: '#B6B09F' }} fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
@@ -226,17 +264,17 @@ const FloatingProductCard: React.FC<{ product: Product }> = ({ product }) => {
         </div>
 
         {/* Product Info */}
-        <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-2 line-clamp-2" style={{ color: '#000000' }}>
+        <div className="flex-1 flex flex-col justify-between">
+          <h3 className="font-semibold text-base mb-2 line-clamp-2" style={{ color: '#000000' }}>
             {product.title}
           </h3>
           
-          <div className="space-y-1 mb-3">
+          <div className="space-y-1 mb-3 min-h-[54px]">
             <div className="text-xs font-medium" style={{ color: '#B6B09F' }}>
               {product.category}
             </div>
             {product.price && (
-              <div className="text-lg font-bold" style={{ color: '#000000' }}>
+              <div className="text-xl font-bold" style={{ color: '#000000' }}>
                 ${product.price}
               </div>
             )}
@@ -262,7 +300,7 @@ const FloatingProductCard: React.FC<{ product: Product }> = ({ product }) => {
           )}
 
           {/* Action Button */}
-          <button className="w-full py-2 btn-primary text-sm rounded-md font-medium hover:scale-105 transition-transform duration-200">
+          <button onClick={onView} className="w-full py-2 btn-primary text-sm rounded-md font-medium hover:scale-105 transition-transform duration-200">
             View Details
           </button>
         </div>

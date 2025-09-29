@@ -132,7 +132,7 @@ class ConversationalAgent:
             results = self.search_engine.search(
                 message, 
                 filters=filters,
-                top_k=5,
+                top_k=3,
                 use_ai_reranking=True
             )
             
@@ -184,7 +184,7 @@ class ConversationalAgent:
             results = self.search_engine.search(
                 search_query,
                 filters=filters,
-                top_k=5,
+                top_k=3,
                 use_ai_reranking=False  # Temporarily disable AI reranking to debug
             )
             print(f"📊 Search results: {len(results.get('results', []))} products found")
@@ -359,6 +359,9 @@ class AgentAPI:
         if image_path and os.path.exists(image_path):
             image = image_path
         
+        # Optional price_bucket passthrough (int or list)
+        if 'price_bucket' in filters:
+            search_filters['price_bucket'] = filters['price_bucket']
         return self.agent.process_message(message, image, search_filters)
     
     def get_info(self) -> Dict:
