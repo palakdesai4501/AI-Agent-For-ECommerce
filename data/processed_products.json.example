@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "total_products": 800,
+    "categories": [
+      "Electronics",
+      "Home & Kitchen",
+      "Clothing, Shoes & Jewelry",
+      "Beauty & Personal Care",
+      "Sports & Outdoors",
+      "Health & Household"
+    ],
+    "generated_at": "2024-01-01T00:00:00Z",
+    "source": "Amazon Products 2023 Dataset"
+  },
+  "products": [
+    {
+      "id": "product_1",
+      "title": "Wireless Bluetooth Headphones",
+      "price": 89.99,
+      "category": "Electronics",
+      "rating": 4.5,
+      "image_url": "https://example.com/headphones.jpg",
+      "description": "High-quality wireless headphones with noise cancellation",
+      "features": ["Bluetooth 5.0", "Noise Cancellation", "30hr Battery"],
+      "ai_relevance_score": 95
+    }
+  ]
+}
