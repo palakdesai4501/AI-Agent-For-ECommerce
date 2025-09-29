@@ -22,25 +22,20 @@ class SearchFilters {
   min_rating float?
 }
 
-// ADD THESE NEW FUNCTIONS to your existing ecommerce.baml:
+// Unified single-entrypoint helper types
+class UserQueryInput {
+  user_message string
+  has_image bool
+  image_description string?
+}
 
-function ClassifyUserIntent(user_message: string, has_image: bool) -> ConversationType {
-  client Gemini
-  prompt #"
-    Classify this user message into one of these categories:
-    
-    User message: "{{user_message}}"
-    Has image attached: {{has_image}}
-    
-    Categories:
-    - GENERAL_CONVERSATION: Greetings, questions about the agent capabilities, general chat
-    - PRODUCT_RECOMMENDATION: Requests for product suggestions or search based on text
-    - IMAGE_SEARCH: User wants to find products based on an uploaded image
-    
-    If has_image is true, return IMAGE_SEARCH.
-    
-    Return only the category name.
-  "#
+class AgentDirective {
+  intent ConversationType
+  // For GENERAL_CONVERSATION
+  reply string?
+  // For PRODUCT_RECOMMENDATION or IMAGE_SEARCH
+  refined_query string?
+  user_filters string?
 }
 
 function HandleGeneralConversation(user_message: string) -> string {
@@ -78,53 +73,38 @@ function AnalyzeProductImage(image_description: string) -> string {
 }
 
 
-function AnalyzeSearchIntent(query: string) -> string {
+// (Removed unused AnalyzeSearchIntent)
+
+// Single entrypoint: take one input and decide what to do.
+function HandleUserQuery(input: UserQueryInput) -> AgentDirective {
   client Gemini
   prompt #"
-    Analyze the following search query and extract the user's intent:
-    Query: "{{query}}"
-    
-    Determine:
-    1. What type of product they're looking for
-    2. Any implicit filters (price range, quality, etc.)
-    3. The main search keywords to use
-    
-    Return a refined search query that captures the user's intent clearly.
-    Keep it concise and focused on the main product attributes.
+    {{ ctx.output_format }}
+
+    You are Cartly, an AI shopping assistant. Decide the user's intent and provide
+    either a direct reply (for GENERAL_CONVERSATION) or a refined_query (for
+    PRODUCT_RECOMMENDATION or IMAGE_SEARCH). Use the following rules:
+
+    - If input.has_image is true, set intent = IMAGE_SEARCH. Use input.image_description
+      to craft a concise refined_query for catalog search.
+    - Otherwise, classify input.user_message as one of:
+        GENERAL_CONVERSATION | PRODUCT_RECOMMENDATION
+    - For GENERAL_CONVERSATION: set reply to a concise, helpful answer. Do not
+      request tools.
+    - For PRODUCT_RECOMMENDATION: create a refined_query that captures product type,
+      key attributes, and any implicit constraints. Keep it short.
+
+    Input:
+    message: "{{ input.user_message }}"
+    has_image: {{ input.has_image }}
+    image_description: {{ input.image_description }}
+
   "#
 }
 
-function GenerateProductRecommendations(
-  query: string, 
-  similar_products: string,
-  user_filters: string?
-) -> ProductRecommendation[] {
-  client Gemini
-  prompt #"
-    Based on the user query: "{{query}}"
-    
-    Here are similar products found:
-    {{similar_products}}
-    
-    {% if user_filters %}
-    User preferences: {{user_filters}}
-    {% endif %}
-    
-    Analyze these products and return the top 5 most relevant recommendations.
-    For each product, provide:
-    - A relevance_score (0-100)
-    - A clear reason why this product matches the user's needs
-    
-    Focus on products that best match the user's intent, considering:
-    - Product quality (rating)
-    - Value for money
-    - Feature alignment with user needs
-    - Category relevance
-    
-    Return as JSON array.
-  "#
-}
+// (Removed unused ToolSearchByText — handled by Python SearchEngine)
 
+// TOOL 2: Image search refinement / explanation helper
 function ExplainRecommendation(
   product: string,
   user_query: string

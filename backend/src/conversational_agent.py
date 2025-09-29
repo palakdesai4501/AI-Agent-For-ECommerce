@@ -45,24 +45,50 @@ class ConversationalAgent:
             Dictionary with agent response
         """
         try:
-            # Classify user intent
+            # Build single-entrypoint query for BAML
             has_image = image is not None
-            intent = b.ClassifyUserIntent(message, has_image)
-            
+            image_description = None
+            if has_image:
+                try:
+                    image_data = self._prepare_image_for_analysis(image)
+                    image_description = self._analyze_image_content(image_data)
+                except Exception:
+                    image_description = "Product image provided"
+
+            directive = b.HandleUserQuery({
+                "user_message": message,
+                "has_image": bool(has_image),
+                "image_description": image_description
+            })
+
+            intent = directive.intent if isinstance(directive, dict) else getattr(directive, "intent", None)
             print(f"Agent Intent: {intent}")
-            
-            if intent == "IMAGE_SEARCH":
-                return self._handle_image_search(image, message, filters)
-            
-            elif intent == "GENERAL_CONVERSATION":
+
+            if intent == "GENERAL_CONVERSATION":
+                reply = directive.get("reply") if isinstance(directive, dict) else getattr(directive, "reply", None)
+                if reply:
+                    return {
+                        'type': 'conversation',
+                        'message': reply,
+                        'products': [],
+                        'follow_up_questions': self._generate_conversation_followups(message),
+                        'agent_name': self.agent_name
+                    }
+                # Fallback to pre-existing general conversation handler
                 return self._handle_general_conversation(message)
-            
-            elif intent == "PRODUCT_RECOMMENDATION":
-                return self._handle_product_search(message, filters)
-            
-            else:
-                # Fallback to product search
-                return self._handle_product_search(message, filters)
+
+            # Text product recommendation
+            if intent == "PRODUCT_RECOMMENDATION":
+                refined_query = directive.get("refined_query") if isinstance(directive, dict) else getattr(directive, "refined_query", None)
+                return self._handle_product_search(refined_query or message, filters)
+
+            # Image search
+            if intent == "IMAGE_SEARCH":
+                refined_query = directive.get("refined_query") if isinstance(directive, dict) else getattr(directive, "refined_query", None)
+                return self._handle_image_search(image, refined_query or image_description or message, filters)
+
+            # Fallback
+            return self._handle_product_search(message, filters)
                 
         except Exception as e:
             return {
@@ -133,19 +159,22 @@ class ConversationalAgent:
             }
     
     def _handle_image_search(self, 
-                            image: Union[str, bytes, Image.Image], 
-                            message: str = "",
-                            filters: Optional[Dict] = None) -> Dict:
+                           image: Union[str, bytes, Image.Image], 
+                           refined_hint: Optional[str] = None,
+                           filters: Optional[Dict] = None) -> Dict:
         """Handle image-based product search."""
         try:
-            # Convert image to proper format for Gemini
-            image_data = self._prepare_image_for_analysis(image)
+            image_description = None
+            search_query = None
             
-            # Analyze image with Gemini Vision
-            image_description = self._analyze_image_content(image_data)
-            
-            # Generate search query from image analysis
-            search_query = b.AnalyzeProductImage(image_description)
+            if refined_hint:
+                # We already have a refined query/description from the entrypoint
+                search_query = refined_hint
+            else:
+                # Convert image to proper format for Gemini and analyze
+                image_data = self._prepare_image_for_analysis(image)
+                image_description = self._analyze_image_content(image_data)
+                search_query = image_description
             
             print(f"Image analysis: {image_description}")
             print(f"Generated search query: {search_query}")
