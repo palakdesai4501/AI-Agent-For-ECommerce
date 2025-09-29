@@ -5,6 +5,7 @@ import base64
 from PIL import Image
 import io
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -27,20 +28,37 @@ def chat():
         filters = data.get('filters', {})
         
         # Handle image if present
-        image_data = data.get('image')
+        image_data = data.get('image') or data.get('imageUrl')
         image_path = None
         
         if image_data:
             try:
-                if image_data.startswith('data:image'):
-                    image_data = image_data.split(',')[1]
-                
-                image_bytes = base64.b64decode(image_data)
-                image = Image.open(io.BytesIO(image_bytes))
-                
                 os.makedirs('temp', exist_ok=True)
-                image_path = 'temp/uploaded_image.jpg'
-                image.save(image_path, 'JPEG')
+
+                # Case 1: image is a data URL/base64
+                if isinstance(image_data, str) and image_data.startswith('data:image'):
+                    image_data = image_data.split(',')[1]
+                    image_bytes = base64.b64decode(image_data)
+                    image = Image.open(io.BytesIO(image_bytes))
+                    image_path = 'temp/uploaded_image.jpg'
+                    image.save(image_path, 'JPEG')
+
+                # Case 2: image is a remote URL
+                elif isinstance(image_data, str) and image_data.startswith(('http://', 'https://')):
+                    resp = requests.get(image_data, timeout=10)
+                    resp.raise_for_status()
+                    content = resp.content
+                    # Try to open as image to validate and convert
+                    image = Image.open(io.BytesIO(content))
+                    image_path = 'temp/uploaded_image.jpg'
+                    image.save(image_path, 'JPEG')
+
+                # Case 3: assume raw base64 string
+                else:
+                    image_bytes = base64.b64decode(image_data)
+                    image = Image.open(io.BytesIO(image_bytes))
+                    image_path = 'temp/uploaded_image.jpg'
+                    image.save(image_path, 'JPEG')
                 
             except Exception as e:
                 return jsonify({'error': f'Image processing failed: {str(e)}'}), 400
