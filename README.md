@@ -72,6 +72,22 @@ AIAgent-comerceWebsite/
 └── README.md
 ```
 
+## 🧭 Architecture (at a glance)
+
+- Single agent, single entrypoint
+  - `HandleUserQuery` (BAML) receives one input (text + optional image flag/description)
+  - Decides intent: GENERAL_CONVERSATION | PRODUCT_RECOMMENDATION | IMAGE_SEARCH
+  - Returns either a direct reply (conversation) or a refined query (search)
+- Backend flow
+  - `POST /api/chat` → `AgentAPI.chat` → `ConversationalAgent.process_message`
+  - GENERAL_CONVERSATION → reply directly (no tool calls)
+  - PRODUCT_RECOMMENDATION → `SearchEngine` over catalog using refined query
+  - IMAGE_SEARCH → image description/refined query → `SearchEngine` over catalog
+- Catalog limitation (explicit)
+  - All recommendations/searches are limited to `data/processed_products.json`
+  - If no match is found, the agent responds clearly that nothing in our catalog matches and suggests next steps (try different keywords, another image, etc.)
+
+
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
