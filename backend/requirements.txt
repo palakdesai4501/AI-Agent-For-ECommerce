@@ -1,0 +1,13 @@
+streamlit>=1.29.0
+datasets>=2.15.0
+pandas>=2.2.0
+numpy>=1.26.0
+pinecone>=3.0.0
+google-generativeai>=0.3.2
+python-dotenv>=1.0.0
+baml-py>=0.209.0
+sentence-transformers>=2.2.2
+scikit-learn>=1.3.2
+plotly>=5.17.0
+requests>=2.31.0
+huggingface_hub>=0.16.0

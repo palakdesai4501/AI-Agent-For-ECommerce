@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'JetBrains Mono', monospace !important;
+  }
+  
+  body {
+    background-color: #F2F2F2;
+    color: #000000;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background-color: #F2F2F2;
+    border: 1px solid #B6B09F;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .floating-card {
+    transform: translateY(0);
+    transition: all 0.2s ease;
+  }
+  
+  .floating-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chat-bubble-user {
+    background-color: #000000;
+    color: #F2F2F2;
+    border-radius: 0.5rem;
+    border-bottom-right-radius: 0.125rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chat-bubble-agent {
+    background-color: #F2F2F2;
+    border: 1px solid #B6B09F;
+    border-radius: 0.5rem;
+    border-bottom-left-radius: 0.125rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn-primary {
+    background-color: #000000;
+    color: #F2F2F2;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: #B6B09F;
+    color: #000000;
+  }
+  
+  .btn-secondary {
+    background-color: #EAE4D5;
+    color: #000000;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #B6B09F;
+    color: #F2F2F2;
+  }
+}
