@@ -23,8 +23,14 @@ class StreamState(BaseModel, typing.Generic[StreamStateValueT]):
     value: StreamStateValueT
     state: typing_extensions.Literal["Pending", "Incomplete", "Complete"]
 # #########################################################################
-# Generated classes (2)
+# Generated classes (4)
 # #########################################################################
+
+class AgentDirective(BaseModel):
+    intent: typing.Optional[types.ConversationType] = None
+    reply: typing.Optional[str] = None
+    refined_query: typing.Optional[str] = None
+    user_filters: typing.Optional[str] = None
 
 class ProductRecommendation(BaseModel):
     product_id: typing.Optional[str] = None
@@ -41,6 +47,11 @@ class SearchFilters(BaseModel):
     min_price: typing.Optional[float] = None
     max_price: typing.Optional[float] = None
     min_rating: typing.Optional[float] = None
+
+class UserQueryInput(BaseModel):
+    user_message: typing.Optional[str] = None
+    has_image: typing.Optional[bool] = None
+    image_description: typing.Optional[str] = None
 
 # #########################################################################
 # Generated type aliases (0)

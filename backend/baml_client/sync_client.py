@@ -105,34 +105,6 @@ class BamlSyncClient:
                 "image_description": image_description,
             })
             return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
-    def AnalyzeSearchIntent(self, query: str,
-        baml_options: BamlCallOptions = {},
-    ) -> str:
-        # Check if on_tick is provided
-        if 'on_tick' in baml_options:
-            stream = self.stream.AnalyzeSearchIntent(query=query,
-                baml_options=baml_options)
-            return stream.get_final_response()
-        else:
-            # Original non-streaming code
-            result = self.__options.merge_options(baml_options).call_function_sync(function_name="AnalyzeSearchIntent", args={
-                "query": query,
-            })
-            return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
-    def ClassifyUserIntent(self, user_message: str,has_image: bool,
-        baml_options: BamlCallOptions = {},
-    ) -> types.ConversationType:
-        # Check if on_tick is provided
-        if 'on_tick' in baml_options:
-            stream = self.stream.ClassifyUserIntent(user_message=user_message,has_image=has_image,
-                baml_options=baml_options)
-            return stream.get_final_response()
-        else:
-            # Original non-streaming code
-            result = self.__options.merge_options(baml_options).call_function_sync(function_name="ClassifyUserIntent", args={
-                "user_message": user_message,"has_image": has_image,
-            })
-            return typing.cast(types.ConversationType, result.cast_to(types, types, stream_types, False, __runtime__))
     def ExplainRecommendation(self, product: str,user_query: str,
         baml_options: BamlCallOptions = {},
     ) -> str:
@@ -147,20 +119,6 @@ class BamlSyncClient:
                 "product": product,"user_query": user_query,
             })
             return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
-    def GenerateProductRecommendations(self, query: str,similar_products: str,user_filters: typing.Optional[str] = None,
-        baml_options: BamlCallOptions = {},
-    ) -> typing.List["types.ProductRecommendation"]:
-        # Check if on_tick is provided
-        if 'on_tick' in baml_options:
-            stream = self.stream.GenerateProductRecommendations(query=query,similar_products=similar_products,user_filters=user_filters,
-                baml_options=baml_options)
-            return stream.get_final_response()
-        else:
-            # Original non-streaming code
-            result = self.__options.merge_options(baml_options).call_function_sync(function_name="GenerateProductRecommendations", args={
-                "query": query,"similar_products": similar_products,"user_filters": user_filters,
-            })
-            return typing.cast(typing.List["types.ProductRecommendation"], result.cast_to(types, types, stream_types, False, __runtime__))
     def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> str:
@@ -175,6 +133,20 @@ class BamlSyncClient:
                 "user_message": user_message,
             })
             return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
+    def HandleUserQuery(self, input: types.UserQueryInput,
+        baml_options: BamlCallOptions = {},
+    ) -> types.AgentDirective:
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            stream = self.stream.HandleUserQuery(input=input,
+                baml_options=baml_options)
+            return stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = self.__options.merge_options(baml_options).call_function_sync(function_name="HandleUserQuery", args={
+                "input": input,
+            })
+            return typing.cast(types.AgentDirective, result.cast_to(types, types, stream_types, False, __runtime__))
     
 
 
@@ -196,30 +168,6 @@ class BamlStreamClient:
           lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
           ctx,
         )
-    def AnalyzeSearchIntent(self, query: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.BamlSyncStream[str, str]:
-        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="AnalyzeSearchIntent", args={
-            "query": query,
-        })
-        return baml_py.BamlSyncStream[str, str](
-          result,
-          lambda x: typing.cast(str, x.cast_to(types, types, stream_types, True, __runtime__)),
-          lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
-          ctx,
-        )
-    def ClassifyUserIntent(self, user_message: str,has_image: bool,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.BamlSyncStream[types.ConversationType, types.ConversationType]:
-        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="ClassifyUserIntent", args={
-            "user_message": user_message,"has_image": has_image,
-        })
-        return baml_py.BamlSyncStream[types.ConversationType, types.ConversationType](
-          result,
-          lambda x: typing.cast(types.ConversationType, x.cast_to(types, types, stream_types, True, __runtime__)),
-          lambda x: typing.cast(types.ConversationType, x.cast_to(types, types, stream_types, False, __runtime__)),
-          ctx,
-        )
     def ExplainRecommendation(self, product: str,user_query: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[str, str]:
@@ -232,18 +180,6 @@ class BamlStreamClient:
           lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
           ctx,
         )
-    def GenerateProductRecommendations(self, query: str,similar_products: str,user_filters: typing.Optional[str] = None,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.BamlSyncStream[typing.List["stream_types.ProductRecommendation"], typing.List["types.ProductRecommendation"]]:
-        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="GenerateProductRecommendations", args={
-            "query": query,"similar_products": similar_products,"user_filters": user_filters,
-        })
-        return baml_py.BamlSyncStream[typing.List["stream_types.ProductRecommendation"], typing.List["types.ProductRecommendation"]](
-          result,
-          lambda x: typing.cast(typing.List["stream_types.ProductRecommendation"], x.cast_to(types, types, stream_types, True, __runtime__)),
-          lambda x: typing.cast(typing.List["types.ProductRecommendation"], x.cast_to(types, types, stream_types, False, __runtime__)),
-          ctx,
-        )
     def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[str, str]:
@@ -254,6 +190,18 @@ class BamlStreamClient:
           result,
           lambda x: typing.cast(str, x.cast_to(types, types, stream_types, True, __runtime__)),
           lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
+          ctx,
+        )
+    def HandleUserQuery(self, input: types.UserQueryInput,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.BamlSyncStream[stream_types.AgentDirective, types.AgentDirective]:
+        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="HandleUserQuery", args={
+            "input": input,
+        })
+        return baml_py.BamlSyncStream[stream_types.AgentDirective, types.AgentDirective](
+          result,
+          lambda x: typing.cast(stream_types.AgentDirective, x.cast_to(types, types, stream_types, True, __runtime__)),
+          lambda x: typing.cast(types.AgentDirective, x.cast_to(types, types, stream_types, False, __runtime__)),
           ctx,
         )
     
@@ -271,20 +219,6 @@ class BamlHttpRequestClient:
             "image_description": image_description,
         }, mode="request")
         return result
-    def AnalyzeSearchIntent(self, query: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="AnalyzeSearchIntent", args={
-            "query": query,
-        }, mode="request")
-        return result
-    def ClassifyUserIntent(self, user_message: str,has_image: bool,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="ClassifyUserIntent", args={
-            "user_message": user_message,"has_image": has_image,
-        }, mode="request")
-        return result
     def ExplainRecommendation(self, product: str,user_query: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
@@ -292,18 +226,18 @@ class BamlHttpRequestClient:
             "product": product,"user_query": user_query,
         }, mode="request")
         return result
-    def GenerateProductRecommendations(self, query: str,similar_products: str,user_filters: typing.Optional[str] = None,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="GenerateProductRecommendations", args={
-            "query": query,"similar_products": similar_products,"user_filters": user_filters,
-        }, mode="request")
-        return result
     def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
         result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="HandleGeneralConversation", args={
             "user_message": user_message,
+        }, mode="request")
+        return result
+    def HandleUserQuery(self, input: types.UserQueryInput,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="HandleUserQuery", args={
+            "input": input,
         }, mode="request")
         return result
     
@@ -321,20 +255,6 @@ class BamlHttpStreamRequestClient:
             "image_description": image_description,
         }, mode="stream")
         return result
-    def AnalyzeSearchIntent(self, query: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="AnalyzeSearchIntent", args={
-            "query": query,
-        }, mode="stream")
-        return result
-    def ClassifyUserIntent(self, user_message: str,has_image: bool,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="ClassifyUserIntent", args={
-            "user_message": user_message,"has_image": has_image,
-        }, mode="stream")
-        return result
     def ExplainRecommendation(self, product: str,user_query: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
@@ -342,18 +262,18 @@ class BamlHttpStreamRequestClient:
             "product": product,"user_query": user_query,
         }, mode="stream")
         return result
-    def GenerateProductRecommendations(self, query: str,similar_products: str,user_filters: typing.Optional[str] = None,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="GenerateProductRecommendations", args={
-            "query": query,"similar_products": similar_products,"user_filters": user_filters,
-        }, mode="stream")
-        return result
     def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
         result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="HandleGeneralConversation", args={
             "user_message": user_message,
+        }, mode="stream")
+        return result
+    def HandleUserQuery(self, input: types.UserQueryInput,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="HandleUserQuery", args={
+            "input": input,
         }, mode="stream")
         return result
     

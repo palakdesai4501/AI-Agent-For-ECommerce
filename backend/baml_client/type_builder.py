@@ -20,7 +20,7 @@ from .globals import DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIM
 class TypeBuilder(type_builder.TypeBuilder):
     def __init__(self):
         super().__init__(classes=set(
-          ["ProductRecommendation","SearchFilters",]
+          ["AgentDirective","ProductRecommendation","SearchFilters","UserQueryInput",]
         ), enums=set(
           ["ConversationType",]
         ), runtime=DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIME)
@@ -35,8 +35,12 @@ class TypeBuilder(type_builder.TypeBuilder):
 
 
     # #########################################################################
-    # Generated classes 2
+    # Generated classes 4
     # #########################################################################
+
+    @property
+    def AgentDirective(self) -> "AgentDirectiveViewer":
+        return AgentDirectiveViewer(self)
 
     @property
     def ProductRecommendation(self) -> "ProductRecommendationViewer":
@@ -45,6 +49,10 @@ class TypeBuilder(type_builder.TypeBuilder):
     @property
     def SearchFilters(self) -> "SearchFiltersViewer":
         return SearchFiltersViewer(self)
+
+    @property
+    def UserQueryInput(self) -> "UserQueryInputViewer":
+        return UserQueryInputViewer(self)
 
 
 
@@ -100,8 +108,59 @@ class ConversationTypeValues:
 
 
 # #########################################################################
-# Generated classes 2
+# Generated classes 4
 # #########################################################################
+
+class AgentDirectiveAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.class_("AgentDirective")
+        self._properties: typing.Set[str] = set([  "intent",  "reply",  "refined_query",  "user_filters",  ])
+        self._props = AgentDirectiveProperties(self._bldr, self._properties)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def props(self) -> "AgentDirectiveProperties":
+        return self._props
+
+
+class AgentDirectiveViewer(AgentDirectiveAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_properties(self) -> typing.List[typing.Tuple[str, type_builder.ClassPropertyViewer]]:
+        return [(name, type_builder.ClassPropertyViewer(self._bldr.property(name))) for name in self._properties]
+    
+
+
+class AgentDirectiveProperties:
+    def __init__(self, bldr: baml_py.ClassBuilder, properties: typing.Set[str]):
+        self.__bldr = bldr
+        self.__properties = properties # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def intent(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("intent"))
+    
+    @property
+    def reply(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("reply"))
+    
+    @property
+    def refined_query(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("refined_query"))
+    
+    @property
+    def user_filters(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("user_filters"))
+    
+    
+
 
 class ProductRecommendationAst:
     def __init__(self, tb: type_builder.TypeBuilder):
@@ -217,6 +276,53 @@ class SearchFiltersProperties:
     @property
     def min_rating(self) -> type_builder.ClassPropertyViewer:
         return type_builder.ClassPropertyViewer(self.__bldr.property("min_rating"))
+    
+    
+
+
+class UserQueryInputAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.class_("UserQueryInput")
+        self._properties: typing.Set[str] = set([  "user_message",  "has_image",  "image_description",  ])
+        self._props = UserQueryInputProperties(self._bldr, self._properties)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def props(self) -> "UserQueryInputProperties":
+        return self._props
+
+
+class UserQueryInputViewer(UserQueryInputAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_properties(self) -> typing.List[typing.Tuple[str, type_builder.ClassPropertyViewer]]:
+        return [(name, type_builder.ClassPropertyViewer(self._bldr.property(name))) for name in self._properties]
+    
+
+
+class UserQueryInputProperties:
+    def __init__(self, bldr: baml_py.ClassBuilder, properties: typing.Set[str]):
+        self.__bldr = bldr
+        self.__properties = properties # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def user_message(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("user_message"))
+    
+    @property
+    def has_image(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("has_image"))
+    
+    @property
+    def image_description(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("image_description"))
     
     
 

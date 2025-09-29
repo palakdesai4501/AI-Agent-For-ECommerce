@@ -30,35 +30,23 @@ class LlmResponseParser:
         result = self.__options.merge_options(baml_options).parse_response(function_name="AnalyzeProductImage", llm_response=llm_response, mode="request")
         return typing.cast(str, result)
 
-    def AnalyzeSearchIntent(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="AnalyzeSearchIntent", llm_response=llm_response, mode="request")
-        return typing.cast(str, result)
-
-    def ClassifyUserIntent(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> types.ConversationType:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="ClassifyUserIntent", llm_response=llm_response, mode="request")
-        return typing.cast(types.ConversationType, result)
-
     def ExplainRecommendation(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
         result = self.__options.merge_options(baml_options).parse_response(function_name="ExplainRecommendation", llm_response=llm_response, mode="request")
         return typing.cast(str, result)
 
-    def GenerateProductRecommendations(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> typing.List["types.ProductRecommendation"]:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="GenerateProductRecommendations", llm_response=llm_response, mode="request")
-        return typing.cast(typing.List["types.ProductRecommendation"], result)
-
     def HandleGeneralConversation(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
         result = self.__options.merge_options(baml_options).parse_response(function_name="HandleGeneralConversation", llm_response=llm_response, mode="request")
         return typing.cast(str, result)
+
+    def HandleUserQuery(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> types.AgentDirective:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="HandleUserQuery", llm_response=llm_response, mode="request")
+        return typing.cast(types.AgentDirective, result)
 
     
 
@@ -74,34 +62,22 @@ class LlmStreamParser:
         result = self.__options.merge_options(baml_options).parse_response(function_name="AnalyzeProductImage", llm_response=llm_response, mode="stream")
         return typing.cast(str, result)
 
-    def AnalyzeSearchIntent(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="AnalyzeSearchIntent", llm_response=llm_response, mode="stream")
-        return typing.cast(str, result)
-
-    def ClassifyUserIntent(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> types.ConversationType:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="ClassifyUserIntent", llm_response=llm_response, mode="stream")
-        return typing.cast(types.ConversationType, result)
-
     def ExplainRecommendation(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
         result = self.__options.merge_options(baml_options).parse_response(function_name="ExplainRecommendation", llm_response=llm_response, mode="stream")
         return typing.cast(str, result)
 
-    def GenerateProductRecommendations(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> typing.List["stream_types.ProductRecommendation"]:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="GenerateProductRecommendations", llm_response=llm_response, mode="stream")
-        return typing.cast(typing.List["stream_types.ProductRecommendation"], result)
-
     def HandleGeneralConversation(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
         result = self.__options.merge_options(baml_options).parse_response(function_name="HandleGeneralConversation", llm_response=llm_response, mode="stream")
         return typing.cast(str, result)
+
+    def HandleUserQuery(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> stream_types.AgentDirective:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="HandleUserQuery", llm_response=llm_response, mode="stream")
+        return typing.cast(stream_types.AgentDirective, result)
 
     

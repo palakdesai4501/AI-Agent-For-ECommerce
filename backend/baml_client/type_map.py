@@ -16,11 +16,17 @@ from . import stream_types
 
 type_map = {
 
+    "types.AgentDirective": types.AgentDirective,
+    "stream_types.AgentDirective": stream_types.AgentDirective,
+
     "types.ProductRecommendation": types.ProductRecommendation,
     "stream_types.ProductRecommendation": stream_types.ProductRecommendation,
 
     "types.SearchFilters": types.SearchFilters,
     "stream_types.SearchFilters": stream_types.SearchFilters,
+
+    "types.UserQueryInput": types.UserQueryInput,
+    "stream_types.UserQueryInput": stream_types.UserQueryInput,
 
 
     "types.ConversationType": types.ConversationType,
