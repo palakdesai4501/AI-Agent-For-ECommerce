@@ -82,13 +82,15 @@ function App() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F2F2F2' }}>
       {/* Header */}
-      <header className="glass-card border-b">
+      <header className="glass-card border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
-                <span className="font-bold text-sm" style={{ color: '#F2F2F2' }}>C</span>
-              </div>
+              <img
+                src="/chat.png"
+                alt="Cartly"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <div>
                 <h1 className="text-lg font-bold" style={{ color: '#000000' }}>Cartly</h1>
                 <p className="text-xs" style={{ color: '#B6B09F' }}>AI Shopping Assistant</p>

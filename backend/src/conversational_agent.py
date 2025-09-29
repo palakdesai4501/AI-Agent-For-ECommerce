@@ -132,7 +132,7 @@ class ConversationalAgent:
             results = self.search_engine.search(
                 message, 
                 filters=filters,
-                top_k=8,
+                top_k=5,
                 use_ai_reranking=True
             )
             
@@ -184,7 +184,7 @@ class ConversationalAgent:
             results = self.search_engine.search(
                 search_query,
                 filters=filters,
-                top_k=8,
+                top_k=5,
                 use_ai_reranking=False  # Temporarily disable AI reranking to debug
             )
             print(f"📊 Search results: {len(results.get('results', []))} products found")

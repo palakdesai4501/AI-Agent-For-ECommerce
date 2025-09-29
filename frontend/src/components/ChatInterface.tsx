@@ -18,10 +18,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
   if (messages.length === 0 && !loading) {
     return (
       <div className="p-6 text-center">
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#000000' }}>
-          <svg className="w-6 h-6" style={{ color: '#F2F2F2' }} fill="currentColor" viewBox="0 0 24 24">
-            <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-          </svg>
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#EAE4D5' }}>
+          <img src="/chat.png" alt="Chat" className="w-6 h-6 object-contain" />
         </div>
         <h3 className="text-lg font-semibold mb-2" style={{ color: '#000000' }}>Hi! I'm Cartly</h3>
         <p className="text-sm mb-4" style={{ color: '#B6B09F' }}>Your AI shopping assistant. I can help you with:</p>
