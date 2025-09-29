@@ -63,29 +63,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {messages.map((message) => (
-        <MessageBubble 
-          key={message.id} 
-          message={message} 
-          onFollowUp={onFollowUp}
-        />
+    <div className="py-6 space-y-6">
+      {messages.map((message, index) => (
+        <div key={message.id}>
+          <MessageBubble
+            message={message}
+            onFollowUp={onFollowUp}
+          />
+
+          {/* Show products for this specific message */}
+          {message.products && message.products.length > 0 && (
+            <div className="mt-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {message.products.map((product) => (
+                  <ProductCard key={product.id} product={product} onView={() => setSelectedProduct(product)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add separator between different search queries */}
+          {index < messages.length - 1 && (
+            <div className="mt-8 mb-2">
+              <div className="h-px" style={{ backgroundColor: '#EAE4D5' }} />
+            </div>
+          )}
+        </div>
       ))}
-      
-      {/* Product Cards */}
-      {products.length > 0 && (
-        <div className="mt-2">
-        <div className="flex items-center mb-3">
-          <h3 className="text-sm font-semibold mb-11" style={{ color: '#000000' }}>Found Products</h3>
-        </div>
-        <div className="grid grid-cols-1 gap-y-12 gap-x-4 sm:grid-cols-2 sm:gap-8 md:grid-cols-3 md:gap-6 overflow-visible px-1">
-          {products.slice(0, 3).map((product) => (
-            <FloatingProductCard key={product.id} product={product} onView={() => setSelectedProduct(product)} />
-          ))}
-        </div>
-        </div>
-      )}
-      
+
       {loading && (
         <div className="flex items-center space-x-2" style={{ color: '#B6B09F' }}>
           <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
@@ -96,7 +101,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
           <span className="text-xs">Cartly is thinking...</span>
         </div>
       )}
-      
+
       <div ref={messagesEndRef} />
 
       {/* Product Detail Modal */}
@@ -188,13 +193,6 @@ const MessageBubble: React.FC<{
           {/* Message text */}
           <p className="text-xs whitespace-pre-wrap leading-relaxed">{message.content}</p>
 
-          {/* Products count */}
-          {message.products && message.products.length > 0 && (
-            <div className="mt-2 px-2 py-1 rounded text-xs inline-block" style={{ backgroundColor: '#EAE4D5' }}>
-              <span style={{ color: '#000000' }}>Found {message.products.length} products</span>
-            </div>
-          )}
-
           {/* Follow-up suggestions */}
           {message.followUp && message.followUp.length > 0 && (
             <div className="mt-2 space-y-1">
@@ -230,80 +228,80 @@ const MessageBubble: React.FC<{
   );
 };
 
-const FloatingProductCard: React.FC<{ product: Product, onView: () => void }> = ({ product, onView }) => {
+const ProductCard: React.FC<{ product: Product, onView: () => void }> = ({ product, onView }) => {
   return (
-    <div className="relative floating-card glass-card rounded-xl p-4 transition-all duration-200 shadow-lg hover:shadow-2xl" style={{ 
-      borderColor: '#B6B09F',
-      backgroundColor: '#F2F2F2',
-      transform: 'translateY(-2px)',
-      minHeight: 360
+    <div className="glass-card rounded-xl overflow-hidden transition-all duration-200 hover:shadow-xl flex flex-col h-full" style={{
+      border: '1px solid #B6B09F',
+      backgroundColor: '#FFFFFF'
     }}>
-      <div className="flex flex-col h-full">
-        {/* Product Image - pop outside card */}
-        <div className="relative -mt-10 mb-2 drop-shadow-xl">
-          {product.image_url ? (
-            <div className="w-full h-48 rounded-xl overflow-hidden">
-              <img 
-                src={product.image_url} 
-                alt={product.title}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-48 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EAE4D5' }}>
-              <svg className="w-8 h-8" style={{ color: '#B6B09F' }} fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </div>
-          )}
-          {product.rating && (
-            <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium shadow-md" style={{ backgroundColor: '#F2F2F2' }}>
-              <span style={{ color: '#000000' }}>{product.rating}★</span>
-            </div>
-          )}
-        </div>
-
-        {/* Product Info */}
-        <div className="flex-1 flex flex-col justify-between">
-          <h3 className="font-semibold text-base mb-2 line-clamp-2" style={{ color: '#000000' }}>
-            {product.title}
-          </h3>
-          
-          <div className="space-y-1 mb-3 min-h-[54px]">
-            <div className="text-xs font-medium" style={{ color: '#B6B09F' }}>
-              {product.category}
-            </div>
-            {product.price && (
-              <div className="text-xl font-bold" style={{ color: '#000000' }}>
-                ${product.price}
-              </div>
-            )}
+      {/* Product Image */}
+      <div className="relative w-full aspect-square overflow-hidden" style={{ backgroundColor: '#F2F2F2' }}>
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={product.title}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#EAE4D5' }}>
+            <svg className="w-12 h-12" style={{ color: '#B6B09F' }} fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
           </div>
+        )}
+        {/* Rating badge - top right corner */}
+        {product.rating && (
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-lg" style={{ backgroundColor: '#FFFFFF', color: '#000000' }}>
+            {product.rating}★
+          </div>
+        )}
+      </div>
 
-          {/* AI Score if available */}
-          {product.ai_relevance_score && (
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium" style={{ color: '#B6B09F' }}>AI Score</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-16 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#EAE4D5' }}>
-                  <div 
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${product.ai_relevance_score}%`,
-                      backgroundColor: '#B6B09F'
-                    }}
-                  ></div>
-                </div>
-                <span className="text-xs font-bold" style={{ color: '#000000' }}>{product.ai_relevance_score}%</span>
-              </div>
-            </div>
-          )}
+      {/* Product Info - with padding */}
+      <div className="p-4 flex flex-col flex-1">
+        {/* Title */}
+        <h3 className="font-semibold text-sm mb-2 line-clamp-2 min-h-[40px]" style={{ color: '#000000' }}>
+          {product.title}
+        </h3>
 
-          {/* Action Button */}
-          <button onClick={onView} className="w-full py-2 btn-primary text-sm rounded-md font-medium hover:scale-105 transition-transform duration-200">
-            View Details
-          </button>
+        {/* Category */}
+        <div className="text-xs mb-2" style={{ color: '#B6B09F' }}>
+          {product.category}
         </div>
+
+        {/* Price */}
+        {product.price && (
+          <div className="text-xl font-bold mb-3" style={{ color: '#000000' }}>
+            ${product.price}
+          </div>
+        )}
+
+        {/* AI Score if available */}
+        {product.ai_relevance_score && (
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium" style={{ color: '#B6B09F' }}>Match</span>
+            <div className="flex items-center space-x-2">
+              <div className="w-16 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#EAE4D5' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${product.ai_relevance_score}%`,
+                    backgroundColor: '#000000'
+                  }}
+                ></div>
+              </div>
+              <span className="text-xs font-semibold" style={{ color: '#000000' }}>{product.ai_relevance_score}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Action Button - anchored to bottom */}
+        <button onClick={onView} className="w-full py-2.5 btn-primary text-sm rounded-lg font-medium transition-all hover:scale-102">
+          View Details
+        </button>
       </div>
     </div>
   );

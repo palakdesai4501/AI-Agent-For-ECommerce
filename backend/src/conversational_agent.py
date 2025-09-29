@@ -141,13 +141,13 @@ class ConversationalAgent:
                 # Format retrieved products for LLM context
                 products_context = self._format_products_for_context(results['results'])
 
-                # Use LLM to analyze retrieved products and generate response
+                # Use LLM to generate minimal response
                 response_message = b.GenerateProductRecommendations(
                     user_query=message,
                     retrieved_products=products_context
                 )
             else:
-                response_message = f"I couldn't find any products matching '{message}'. Try different keywords or check the filters."
+                response_message = "I couldn't find any products matching your request."
 
             return {
                 'type': 'product_search',
@@ -201,13 +201,13 @@ class ConversationalAgent:
                 # Format retrieved products for LLM context
                 products_context = self._format_products_for_context(results['results'])
 
-                # Use LLM to analyze retrieved products and generate response
+                # Use LLM to generate minimal response
                 response_message = b.GenerateProductRecommendations(
                     user_query=f"Image search: {search_query}",
                     retrieved_products=products_context
                 )
             else:
-                response_message = "I analyzed your image but couldn't find similar products in our catalog. Try uploading a different image or describe what you're looking for."
+                response_message = "I couldn't find products similar to your image."
 
             return {
                 'type': 'image_search',

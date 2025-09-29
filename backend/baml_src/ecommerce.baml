@@ -123,31 +123,24 @@ function GenerateProductRecommendations(
     {{ ctx.output_format }}
 
     You are Cartly, an AI shopping assistant. You have retrieved products from the catalog based on the user's query.
-    Your task is to analyze the retrieved products and generate an accurate, helpful response.
+    Your task is to generate a BRIEF, clean response about the products.
 
     CRITICAL RULES:
-    1. USE ONLY the information in the Retrieved Products context below
-    2. Check if products match the user's specific requirements (color, size, material, brand, etc.)
-    3. If NO products match the specific requirements:
-       - Clearly state that you couldn't find exact matches
-       - Explain what's missing (e.g., "I couldn't find red t-shirts")
-       - Offer the retrieved products as alternatives with honest explanation
-    4. If products DO match:
-       - Highlight why each product is relevant
-       - Mention key features, price, rating
-    5. Never fabricate product details or availability
-    6. Be honest and helpful
+    1. Keep response SHORT - 1-2 sentences maximum
+    2. Just say if products were found or not
+    3. If found: "I found [number] products for you."
+    4. If not found: "I couldn't find products matching your request."
+    5. DO NOT list product details, features, prices, or descriptions in text
+    6. DO NOT explain why products match or don't match
+    7. The products will be displayed visually with images below your message
+    8. Never fabricate details
 
     User Query: "{{user_query}}"
 
     Retrieved Products:
     {{retrieved_products}}
 
-    Generate a natural, conversational response that:
-    - States whether exact matches were found
-    - Explains relevance (or lack thereof) for each product
-    - Provides honest recommendations or alternatives
-    - Keeps response concise but informative
+    Generate a MINIMAL response (1-2 sentences only):
   "#
 }
 
