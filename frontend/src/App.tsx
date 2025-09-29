@@ -1,9 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import ChatInterface from './components/ChatInterface';
-import ProductGrid from './components/ProductGrid';
 import ImageUpload from './components/ImageUpload';
 import FloatingImagePanel from './components/FloatingImagePanel';
-import AgentInfo from './components/AgentInfo';
 import { chatWithAgent, getAgentInfo } from './services/api';
 import type { Message, Product, AgentResponse } from './types';
 

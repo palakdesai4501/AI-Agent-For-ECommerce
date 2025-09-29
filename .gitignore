@@ -211,6 +211,9 @@ data/*.mp4
 data/*.mov
 data/*.avi
 
+# Processed data files (can be regenerated)
+data/processed_products.json
+
 # Keep essential data files
-!data/processed_products.json
 !data/*.json
+!data/processed_products.json.example

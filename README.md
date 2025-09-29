@@ -109,7 +109,13 @@ AIAgent-comerceWebsite/
    PINECONE_ENVIRONMENT=your_pinecone_environment
    ```
 
-5. **Start the backend server:**
+5. **Generate processed product data:**
+   ```bash
+   python src/data_processor.py
+   ```
+   This will create `data/processed_products.json` with 800 curated products.
+
+6. **Start the backend server:**
    ```bash
    python api_server.py
    ```
