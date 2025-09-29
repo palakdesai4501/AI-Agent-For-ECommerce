@@ -20,15 +20,30 @@ class ConversationalAgent:
         # Use correct data path when running from backend directory
         import os
         data_path = os.path.join('data', 'processed_products.json')
-        self.search_engine = SearchEngine(data_path)
+        self.search_engine = None  # Lazy load
+        self.data_path = data_path
         
-        # Initialize Gemini for image analysis
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        self.vision_model = genai.GenerativeModel('gemini-2.0-flash-lite')
+        # Initialize Gemini for image analysis (lazy load)
+        self.genai_configured = False
+        self.vision_model = None
         
         # Agent identity
         self.agent_name = "Cartly"
         self.agent_description = "AI Shopping Assistant"
+    
+    def _ensure_search_engine(self):
+        """Lazy load search engine to save memory."""
+        if self.search_engine is None:
+            from src.search_engine import SearchEngine
+            self.search_engine = SearchEngine(self.data_path)
+    
+    def _ensure_vision_model(self):
+        """Lazy load vision model to save memory."""
+        if not self.genai_configured:
+            genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+            self.genai_configured = True
+        if self.vision_model is None:
+            self.vision_model = genai.GenerativeModel('gemini-2.0-flash-lite')
     
     def process_message(self, 
                        message: str, 
@@ -46,6 +61,9 @@ class ConversationalAgent:
             Dictionary with agent response
         """
         try:
+            # Ensure search engine is loaded
+            self._ensure_search_engine()
+            
             # Build single-entrypoint query for BAML
             has_image = image is not None
             image_description = None
@@ -254,6 +272,9 @@ class ConversationalAgent:
     def _analyze_image_content(self, image_data: bytes) -> str:
         """Analyze image content using Gemini Vision."""
         try:
+            # Ensure vision model is loaded
+            self._ensure_vision_model()
+            
             # Prepare image for Gemini
             image_part = {
                 "mime_type": "image/jpeg",
