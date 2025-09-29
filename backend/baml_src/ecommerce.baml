@@ -59,16 +59,31 @@ function HandleGeneralConversation(user_message: string) -> string {
 function AnalyzeProductImage(image_description: string) -> string {
   client Gemini
   prompt #"
-    Based on this image description: "{{image_description}}"
-    
-    Generate a search query to find similar or related products in an e-commerce catalog.
-    Focus on:
-    - Product type and category
-    - Key visual features (color, style, material)
-    - Likely use case or purpose
-    - Brand or style characteristics
-    
-    Return a concise search query that would find similar products.
+    You are an e-commerce search expert. Convert this structured product description into a focused search query.
+
+    Description:
+    {{image_description}}
+
+    TASK: Create a SHORT search query (5-10 words max) that captures the most important searchable attributes.
+
+    RULES:
+    1. Start with the product type (most important)
+    2. Add 2-3 key distinguishing features (color, material, style, target audience)
+    3. Use simple, common e-commerce terms
+    4. Avoid long descriptions or sentences
+    5. Focus on what would match in a product catalog
+
+    EXAMPLES:
+    Input: "Product Type: Headphones, Colors: black, Features: wireless, over-ear, Target: adults"
+    Output: "wireless headphones black over-ear bluetooth"
+
+    Input: "Product Type: Jacket, Category: clothing, Colors: gray navy, Target: kids boys"
+    Output: "boys jacket gray navy kids clothing"
+
+    Input: "Product Type: Water bottle, Features: insulated, stainless steel, Colors: blue"
+    Output: "insulated water bottle stainless steel blue"
+
+    Now generate the search query:
   "#
 }
 
@@ -127,20 +142,20 @@ function GenerateProductRecommendations(
 
     CRITICAL RULES:
     1. Keep response SHORT - 1-2 sentences maximum
-    2. Just say if products were found or not
-    3. If found: "I found [number] products for you."
-    4. If not found: "I couldn't find products matching your request."
+    2. Count the ACTUAL number of products in the retrieved list
+    3. If found: "I found [exact_count] product(s) for you." (use singular "product" if count is 1)
+    4. If not found or empty list: "I couldn't find products matching your request."
     5. DO NOT list product details, features, prices, or descriptions in text
     6. DO NOT explain why products match or don't match
     7. The products will be displayed visually with images below your message
-    8. Never fabricate details
+    8. Never fabricate details or counts
 
     User Query: "{{user_query}}"
 
     Retrieved Products:
     {{retrieved_products}}
 
-    Generate a MINIMAL response (1-2 sentences only):
+    Generate a MINIMAL response (1-2 sentences only) with the EXACT product count:
   "#
 }
 

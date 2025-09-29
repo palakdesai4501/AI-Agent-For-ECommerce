@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ChatInterface from './components/ChatInterface';
-import FloatingImagePanel from './components/FloatingImagePanel';
 import { chatWithAgent, getAgentInfo } from './services/api';
 import type { Message, Product, AgentResponse } from './types';
 
@@ -8,7 +7,6 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [showImagePanel, setShowImagePanel] = useState(false);
   const [agentInfo, setAgentInfo] = useState<any>(null);
 
   const handleSendMessage = async (message: string, image?: string) => {
@@ -45,11 +43,7 @@ function App() {
 
       setMessages(prev => [...prev, agentMessage]);
 
-      // Show floating panel for image search results
-      if (response.type === 'image_search' && image && response.products && response.products.length > 0) {
-        setUploadedImage(image);
-        setShowImagePanel(true);
-      }
+      // Don't show floating panel - products are displayed in chat
 
     } catch (error) {
       console.error('Chat error:', error);
@@ -122,16 +116,6 @@ function App() {
         </div>
       </div>
 
-      {/* Floating Image Panel */}
-      {showImagePanel && uploadedImage && (
-        <FloatingImagePanel
-          image={uploadedImage}
-          products={messages
-            .filter(m => m.type === 'agent' && m.products)
-            .flatMap(m => m.products || [])}
-          onClose={() => setShowImagePanel(false)}
-        />
-      )}
     </div>
   );
 }

@@ -138,14 +138,12 @@ class ConversationalAgent:
             )
 
             if results['results']:
-                # Format retrieved products for LLM context
-                products_context = self._format_products_for_context(results['results'])
-
-                # Use LLM to generate minimal response
-                response_message = b.GenerateProductRecommendations(
-                    user_query=message,
-                    retrieved_products=products_context
-                )
+                # Generate simple message with actual count
+                count = len(results['results'])
+                if count == 1:
+                    response_message = "I found 1 product for you."
+                else:
+                    response_message = f"I found {count} products for you."
             else:
                 response_message = "I couldn't find any products matching your request."
 
@@ -182,10 +180,17 @@ class ConversationalAgent:
                 # Convert image to proper format for Gemini and analyze
                 image_data = self._prepare_image_for_analysis(image)
                 image_description = self._analyze_image_content(image_data)
-                search_query = image_description
 
-            print(f"Image analysis: {image_description}")
-            print(f"Generated search query: {search_query}")
+                # Use BAML to convert structured description into focused search query
+                try:
+                    search_query = b.AnalyzeProductImage(image_description)
+                    print(f"Image analysis:\n{image_description}")
+                    print(f"Refined search query: {search_query}")
+                except Exception as baml_error:
+                    print(f"BAML refinement failed: {baml_error}, using description directly")
+                    search_query = image_description
+
+            print(f"Final search query: {search_query}")
 
             # Search for similar products
             print(f"🔍 Searching for: '{search_query}'")
@@ -198,14 +203,12 @@ class ConversationalAgent:
             print(f"📊 Search results: {len(results.get('results', []))} products found")
 
             if results['results']:
-                # Format retrieved products for LLM context
-                products_context = self._format_products_for_context(results['results'])
-
-                # Use LLM to generate minimal response
-                response_message = b.GenerateProductRecommendations(
-                    user_query=f"Image search: {search_query}",
-                    retrieved_products=products_context
-                )
+                # Generate simple message with actual count
+                count = len(results['results'])
+                if count == 1:
+                    response_message = "I found 1 product for you."
+                else:
+                    response_message = f"I found {count} products for you."
             else:
                 response_message = "I couldn't find products similar to your image."
 
@@ -256,24 +259,28 @@ class ConversationalAgent:
                 "mime_type": "image/jpeg",
                 "data": image_data
             }
-            
+
             prompt = """
-            Analyze this image and describe the product shown. Focus on:
-            1. Product type and category
-            2. Color, style, and design features
-            3. Material or build quality indicators
-            4. Brand elements if visible
-            5. Use case or target audience
-            
-            Provide a detailed but concise description suitable for product search.
+            Analyze this product image and extract key searchable attributes.
+
+            Provide ONLY the following information in a structured format:
+            - Product Type: (e.g., shirt, headphones, water bottle, etc.)
+            - Category: (e.g., clothing, electronics, home goods, etc.)
+            - Main Colors: (list 1-3 dominant colors)
+            - Key Features: (list 2-4 distinctive visual features)
+            - Material/Build: (if visible, e.g., cotton, plastic, metal, etc.)
+            - Brand/Logo: (if visible)
+            - Target Audience: (e.g., men, women, kids, unisex, etc.)
+
+            Be specific and concise. Focus on attributes that would help find similar products in an e-commerce catalog.
             """
-            
+
             response = self.vision_model.generate_content([prompt, image_part])
             return response.text.strip()
-            
+
         except Exception as e:
             print(f"Error analyzing image: {e}")
-            return "A product image requiring similar item search"
+            return "Product type: general item\nCategory: miscellaneous"
     
     def _format_products_for_context(self, products: List[Dict]) -> str:
         """Format products into a structured context string for LLM analysis."""

@@ -229,18 +229,20 @@ class VectorStore:
             print(f"Error upserting products: {e}")
             return False
     
-    def search_similar_products(self, 
-                              query: str, 
+    def search_similar_products(self,
+                              query: str,
                               top_k: int = 10,
-                              filters: Optional[Dict] = None) -> List[Tuple[Dict, float]]:
+                              filters: Optional[Dict] = None,
+                              min_similarity: float = 0.3) -> List[Tuple[Dict, float]]:
         """
         Search for similar products using vector similarity.
-        
+
         Args:
             query: Search query text
             top_k: Number of results to return
             filters: Optional filters for metadata
-            
+            min_similarity: Minimum cosine similarity score (0-1), default 0.3
+
         Returns:
             List of tuples (product_metadata, similarity_score)
         """
@@ -288,6 +290,11 @@ class VectorStore:
                 meta = match.get('metadata', {})
                 pid = meta.get('product_id')
                 score = match.get('score', 0.0)
+
+                # Apply similarity threshold - skip products with low relevance
+                if score < min_similarity:
+                    continue
+
                 if not pid:
                     # Fallback: try to build a synthetic id from title
                     pid = f"title::{meta.get('title', '')}"
@@ -296,6 +303,13 @@ class VectorStore:
 
             # Sort by score and take top_k unique products
             collapsed = sorted(best_by_product.values(), key=lambda x: x[1], reverse=True)[:top_k]
+
+            # Log similarity scores for debugging
+            if collapsed:
+                print(f"📊 Top results with scores:")
+                for i, (prod, score) in enumerate(collapsed[:5], 1):
+                    print(f"   {i}. {prod.get('title', 'Unknown')[:50]} - Score: {score:.3f}")
+
             return collapsed
             
         except Exception as e:

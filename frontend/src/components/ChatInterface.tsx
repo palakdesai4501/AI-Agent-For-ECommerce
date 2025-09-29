@@ -106,33 +106,112 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFoll
 
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedProduct(null)} />
-          <div className="relative glass-card rounded-xl p-4 w-full max-w-2xl mx-4" style={{ backgroundColor: '#F2F2F2', border: '1px solid #B6B09F' }}>
-            <button onClick={() => setSelectedProduct(null)} className="absolute right-3 top-3 text-sm px-2 py-1" style={{ color: '#000000', backgroundColor: '#EAE4D5', borderRadius: 6 }}>Close</button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-lg overflow-hidden" style={{ backgroundColor: '#EAE4D5' }}>
-                {selectedProduct.image_url ? (
-                  <img src={selectedProduct.image_url} alt={selectedProduct.title} className="w-full h-64 object-cover" />
-                ) : (
-                  <div className="w-full h-64 flex items-center justify-center"><span>No image</span></div>
-                )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedProduct(null)} />
+
+          {/* Modal */}
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl" style={{ backgroundColor: '#FFFFFF', border: '1px solid #B6B09F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            {/* Close button - top right */}
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="absolute right-6 top-6 z-10 p-2 rounded-lg transition-colors hover:bg-opacity-80"
+              style={{ backgroundColor: '#EAE4D5', color: '#000000' }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+              {/* Left: Image */}
+              <div className="flex items-center justify-center" style={{ backgroundColor: '#F2F2F2', borderRadius: '12px', padding: '24px' }}>
+                <div className="w-full max-w-md">
+                  {selectedProduct.image_url ? (
+                    <img
+                      src={selectedProduct.image_url}
+                      alt={selectedProduct.title}
+                      className="w-full h-auto object-contain rounded-lg"
+                      style={{ maxHeight: '400px' }}
+                    />
+                  ) : (
+                    <div className="w-full h-64 flex items-center justify-center" style={{ color: '#B6B09F' }}>
+                      <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span className="text-sm">No image available</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold mb-2" style={{ color: '#000000' }}>{selectedProduct.title}</h2>
-                <div className="text-sm mb-2" style={{ color: '#B6B09F' }}>{selectedProduct.category}</div>
-                {selectedProduct.price && (
-                  <div className="text-xl font-bold mb-3" style={{ color: '#000000' }}>${selectedProduct.price}</div>
-                )}
+
+              {/* Right: Details */}
+              <div className="flex flex-col">
+                {/* Title */}
+                <h2 className="text-2xl font-bold mb-3" style={{ color: '#000000', lineHeight: '1.3' }}>
+                  {selectedProduct.title}
+                </h2>
+
+                {/* Category */}
+                <div className="text-sm font-medium mb-4 px-3 py-1.5 rounded-lg inline-block w-fit" style={{ backgroundColor: '#EAE4D5', color: '#000000' }}>
+                  {selectedProduct.category}
+                </div>
+
+                {/* Rating */}
                 {selectedProduct.rating && (
-                  <div className="text-sm mb-2" style={{ color: '#000000' }}>Rating: {selectedProduct.rating}★</div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-5 h-5" style={{ color: '#FFD700' }} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-lg font-semibold" style={{ color: '#000000' }}>{selectedProduct.rating}</span>
+                    </div>
+                    {selectedProduct.rating_count && (
+                      <span className="text-sm" style={{ color: '#B6B09F' }}>({selectedProduct.rating_count.toLocaleString()} reviews)</span>
+                    )}
+                  </div>
                 )}
+
+                {/* Price */}
+                {selectedProduct.price && (
+                  <div className="text-4xl font-bold mb-6" style={{ color: '#000000' }}>
+                    ${selectedProduct.price}
+                  </div>
+                )}
+
+                {/* Description */}
                 {selectedProduct.description && (
-                  <p className="text-sm mb-3" style={{ color: '#000000' }}>{selectedProduct.description}</p>
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold mb-2" style={{ color: '#000000' }}>Description</h3>
+                    <p className="text-base leading-relaxed" style={{ color: '#000000', lineHeight: '1.6' }}>
+                      {selectedProduct.description}
+                    </p>
+                  </div>
                 )}
-                <div className="flex gap-2">
-                  <a href={selectedProduct.product_url || selectedProduct.image_url || '#'} target="_blank" rel="noreferrer" className="btn-primary px-4 py-2 text-sm rounded-md">Open Link</a>
-                  <button onClick={() => setSelectedProduct(null)} className="btn-secondary px-4 py-2 text-sm rounded-md">Close</button>
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Buttons */}
+                <div className="flex gap-3 mt-6 pt-6 border-t" style={{ borderColor: '#EAE4D5' }}>
+                  <a
+                    href={selectedProduct.product_url || selectedProduct.image_url || '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 btn-primary px-6 py-3 text-sm font-semibold rounded-xl text-center transition-all hover:scale-102"
+                  >
+                    Open Link
+                  </a>
+                  <button
+                    onClick={() => setSelectedProduct(null)}
+                    className="px-6 py-3 text-sm font-semibold rounded-xl transition-all"
+                    style={{ backgroundColor: '#EAE4D5', color: '#000000' }}
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>

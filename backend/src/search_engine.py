@@ -68,10 +68,11 @@ class SearchEngine:
             print("🔎 Performing vector similarity search...")
             similar_products = self.vector_store.search_similar_products(
                 refined_query,
-                top_k=top_k * 2,  # Get more results for AI filtering
-                filters=pinecone_filters
+                top_k=top_k * 3,  # Get more candidates to ensure quality results
+                filters=pinecone_filters,
+                min_similarity=0.35  # Increased threshold for better quality
             )
-            print(f"🎯 Vector search found {len(similar_products)} similar products")
+            print(f"🎯 Vector search found {len(similar_products)} similar products (min_similarity=0.35)")
             
             if not similar_products:
                 return {
