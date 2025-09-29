@@ -109,6 +109,21 @@ class BamlAsyncClient:
                 "product": product,"user_query": user_query,
             })
             return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
+    async def GenerateProductRecommendations(self, user_query: str,retrieved_products: str,
+        baml_options: BamlCallOptions = {},
+    ) -> str:
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            # Use streaming internally when on_tick is provided
+            stream = self.stream.GenerateProductRecommendations(user_query=user_query,retrieved_products=retrieved_products,
+                baml_options=baml_options)
+            return await stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = await self.__options.merge_options(baml_options).call_function_async(function_name="GenerateProductRecommendations", args={
+                "user_query": user_query,"retrieved_products": retrieved_products,
+            })
+            return typing.cast(str, result.cast_to(types, types, stream_types, False, __runtime__))
     async def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> str:
@@ -172,6 +187,18 @@ class BamlStreamClient:
           lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
           ctx,
         )
+    def GenerateProductRecommendations(self, user_query: str,retrieved_products: str,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.BamlStream[str, str]:
+        ctx, result = self.__options.merge_options(baml_options).create_async_stream(function_name="GenerateProductRecommendations", args={
+            "user_query": user_query,"retrieved_products": retrieved_products,
+        })
+        return baml_py.BamlStream[str, str](
+          result,
+          lambda x: typing.cast(str, x.cast_to(types, types, stream_types, True, __runtime__)),
+          lambda x: typing.cast(str, x.cast_to(types, types, stream_types, False, __runtime__)),
+          ctx,
+        )
     def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlStream[str, str]:
@@ -218,6 +245,13 @@ class BamlHttpRequestClient:
             "product": product,"user_query": user_query,
         }, mode="request")
         return result
+    async def GenerateProductRecommendations(self, user_query: str,retrieved_products: str,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = await self.__options.merge_options(baml_options).create_http_request_async(function_name="GenerateProductRecommendations", args={
+            "user_query": user_query,"retrieved_products": retrieved_products,
+        }, mode="request")
+        return result
     async def HandleGeneralConversation(self, user_message: str,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
@@ -252,6 +286,13 @@ class BamlHttpStreamRequestClient:
     ) -> baml_py.baml_py.HTTPRequest:
         result = await self.__options.merge_options(baml_options).create_http_request_async(function_name="ExplainRecommendation", args={
             "product": product,"user_query": user_query,
+        }, mode="stream")
+        return result
+    async def GenerateProductRecommendations(self, user_query: str,retrieved_products: str,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = await self.__options.merge_options(baml_options).create_http_request_async(function_name="GenerateProductRecommendations", args={
+            "user_query": user_query,"retrieved_products": retrieved_products,
         }, mode="stream")
         return result
     async def HandleGeneralConversation(self, user_message: str,

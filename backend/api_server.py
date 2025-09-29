@@ -6,10 +6,11 @@ from PIL import Image
 import io
 from dotenv import load_dotenv
 import requests
+from src.conversational_agent import AgentAPI
 
 load_dotenv()
 
-from src.conversational_agent import AgentAPI
+
 
 app = Flask(__name__)
 

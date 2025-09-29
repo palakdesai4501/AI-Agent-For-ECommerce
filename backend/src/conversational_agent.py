@@ -3,11 +3,12 @@ import base64
 from typing import Dict, List, Optional, Union
 from PIL import Image
 import io
+from dotenv import load_dotenv
 import google.generativeai as genai
 from baml_client import b
 from src.search_engine import SearchEngine
 
-
+load_dotenv()
 class ConversationalAgent:
     """
     Unified AI agent that handles general conversation, text-based product recommendations,
@@ -130,17 +131,24 @@ class ConversationalAgent:
         try:
             # Use existing search engine
             results = self.search_engine.search(
-                message, 
+                message,
                 filters=filters,
                 top_k=3,
                 use_ai_reranking=True
             )
-            
+
             if results['results']:
-                response_message = f"I found {len(results['results'])} great products for '{message}'. Here are my top recommendations:"
+                # Format retrieved products for LLM context
+                products_context = self._format_products_for_context(results['results'])
+
+                # Use LLM to analyze retrieved products and generate response
+                response_message = b.GenerateProductRecommendations(
+                    user_query=message,
+                    retrieved_products=products_context
+                )
             else:
                 response_message = f"I couldn't find any products matching '{message}'. Try different keywords or check the filters."
-            
+
             return {
                 'type': 'product_search',
                 'message': response_message,
@@ -149,7 +157,7 @@ class ConversationalAgent:
                 'total_found': results.get('total_found', 0),
                 'follow_up_questions': self._generate_product_followups(message, results['results'])
             }
-            
+
         except Exception as e:
             return {
                 'type': 'error',
@@ -158,15 +166,15 @@ class ConversationalAgent:
                 'error': str(e)
             }
     
-    def _handle_image_search(self, 
-                           image: Union[str, bytes, Image.Image], 
+    def _handle_image_search(self,
+                           image: Union[str, bytes, Image.Image],
                            refined_hint: Optional[str] = None,
                            filters: Optional[Dict] = None) -> Dict:
         """Handle image-based product search."""
         try:
             image_description = None
             search_query = None
-            
+
             if refined_hint:
                 # We already have a refined query/description from the entrypoint
                 search_query = refined_hint
@@ -175,25 +183,32 @@ class ConversationalAgent:
                 image_data = self._prepare_image_for_analysis(image)
                 image_description = self._analyze_image_content(image_data)
                 search_query = image_description
-            
+
             print(f"Image analysis: {image_description}")
             print(f"Generated search query: {search_query}")
-            
+
             # Search for similar products
             print(f"🔍 Searching for: '{search_query}'")
             results = self.search_engine.search(
                 search_query,
                 filters=filters,
                 top_k=3,
-                use_ai_reranking=False  # Temporarily disable AI reranking to debug
+                use_ai_reranking=False
             )
             print(f"📊 Search results: {len(results.get('results', []))} products found")
-            
+
             if results['results']:
-                response_message = f"Based on your image, I found {len(results['results'])} similar products. Here's what matches:"
+                # Format retrieved products for LLM context
+                products_context = self._format_products_for_context(results['results'])
+
+                # Use LLM to analyze retrieved products and generate response
+                response_message = b.GenerateProductRecommendations(
+                    user_query=f"Image search: {search_query}",
+                    retrieved_products=products_context
+                )
             else:
                 response_message = "I analyzed your image but couldn't find similar products in our catalog. Try uploading a different image or describe what you're looking for."
-            
+
             return {
                 'type': 'image_search',
                 'message': response_message,
@@ -207,7 +222,7 @@ class ConversationalAgent:
                     "Do you need help with product details?"
                 ]
             }
-            
+
         except Exception as e:
             return {
                 'type': 'error',
@@ -260,6 +275,29 @@ class ConversationalAgent:
             print(f"Error analyzing image: {e}")
             return "A product image requiring similar item search"
     
+    def _format_products_for_context(self, products: List[Dict]) -> str:
+        """Format products into a structured context string for LLM analysis."""
+        if not products:
+            return "No products retrieved."
+
+        context_parts = []
+        for idx, product in enumerate(products, 1):
+            product_info = f"""
+Product {idx}:
+- ID: {product.get('id', 'N/A')}
+- Title: {product.get('title', 'N/A')}
+- Category: {product.get('category', 'N/A')}
+- Store/Brand: {product.get('store', 'N/A')}
+- Price: ${product.get('price', 'N/A')}
+- Rating: {product.get('rating', 'N/A')}/5.0 ({product.get('rating_count', 0)} reviews)
+- Description: {product.get('description', 'N/A')[:300]}...
+- Features: {', '.join(product.get('features', [])[:5]) if product.get('features') else 'None listed'}
+- Similarity Score: {product.get('similarity_score', 0):.3f}
+""".strip()
+            context_parts.append(product_info)
+
+        return "\n\n".join(context_parts)
+
     def _generate_conversation_followups(self, message: str) -> List[str]:
         """Generate follow-up questions for general conversation."""
         message_lower = message.lower()

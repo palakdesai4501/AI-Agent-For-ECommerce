@@ -113,7 +113,45 @@ function HandleUserQuery(input: UserQueryInput) -> AgentDirective {
 
 // (Removed unused ToolSearchByText — handled by Python SearchEngine)
 
-// TOOL 2: Image search refinement / explanation helper
+// TOOL 2: Context-aware product recommendations (RAG)
+function GenerateProductRecommendations(
+  user_query: string,
+  retrieved_products: string
+) -> string {
+  client Gemini
+  prompt #"
+    {{ ctx.output_format }}
+
+    You are Cartly, an AI shopping assistant. You have retrieved products from the catalog based on the user's query.
+    Your task is to analyze the retrieved products and generate an accurate, helpful response.
+
+    CRITICAL RULES:
+    1. USE ONLY the information in the Retrieved Products context below
+    2. Check if products match the user's specific requirements (color, size, material, brand, etc.)
+    3. If NO products match the specific requirements:
+       - Clearly state that you couldn't find exact matches
+       - Explain what's missing (e.g., "I couldn't find red t-shirts")
+       - Offer the retrieved products as alternatives with honest explanation
+    4. If products DO match:
+       - Highlight why each product is relevant
+       - Mention key features, price, rating
+    5. Never fabricate product details or availability
+    6. Be honest and helpful
+
+    User Query: "{{user_query}}"
+
+    Retrieved Products:
+    {{retrieved_products}}
+
+    Generate a natural, conversational response that:
+    - States whether exact matches were found
+    - Explains relevance (or lack thereof) for each product
+    - Provides honest recommendations or alternatives
+    - Keeps response concise but informative
+  "#
+}
+
+// TOOL 3: Single product explanation helper
 function ExplainRecommendation(
   product: string,
   user_query: string
@@ -125,15 +163,15 @@ function ExplainRecommendation(
     availability, or features that are not explicitly provided.
     If the product does not clearly satisfy key constraints in the User Query
     (e.g., color, size, model), state that directly and avoid claiming it does.
-    
+
     User Query: "{{user_query}}"
     Product: {{product}}
-    
+
     Provide a personalized explanation that highlights:
     1. How this product meets their specific needs
     2. Key features that make it stand out
     3. Value proposition
-    
+
     Keep the explanation conversational and helpful, like a knowledgeable sales assistant.
     Be precise and do not fabricate details beyond the provided Product fields.
   "#

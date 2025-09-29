@@ -6,7 +6,7 @@
 client<llm> Gemini {
   provider google-ai
   options {
-    model "gemini-2.0-flash-lite"
+    model "gemini-2.5-flash-lite"
     api_key env.GEMINI_API_KEY
   }
 }

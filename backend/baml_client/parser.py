@@ -36,6 +36,12 @@ class LlmResponseParser:
         result = self.__options.merge_options(baml_options).parse_response(function_name="ExplainRecommendation", llm_response=llm_response, mode="request")
         return typing.cast(str, result)
 
+    def GenerateProductRecommendations(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> str:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="GenerateProductRecommendations", llm_response=llm_response, mode="request")
+        return typing.cast(str, result)
+
     def HandleGeneralConversation(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
@@ -66,6 +72,12 @@ class LlmStreamParser:
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> str:
         result = self.__options.merge_options(baml_options).parse_response(function_name="ExplainRecommendation", llm_response=llm_response, mode="stream")
+        return typing.cast(str, result)
+
+    def GenerateProductRecommendations(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> str:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="GenerateProductRecommendations", llm_response=llm_response, mode="stream")
         return typing.cast(str, result)
 
     def HandleGeneralConversation(
