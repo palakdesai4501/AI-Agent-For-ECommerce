@@ -212,5 +212,5 @@ data/*.mov
 data/*.avi
 
 # Processed data files (can be regenerated)
-data/processed_products.json
+# data/processed_products.json  # Commented out - needed for deployment
 !data/processed_products.json.example
