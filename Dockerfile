@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY backend/ .
 
+# Copy the data file
+COPY data/processed_products.json data/
+
 # Create temp directory
 RUN mkdir -p temp
 
