@@ -145,9 +145,9 @@ class ConversationalAgent:
             }
     
     def _handle_product_search(self, message: str, filters: Optional[Dict] = None) -> Dict:
-        """Handle text-based product recommendations."""
+        """Handle text-based product recommendations with RAG."""
         try:
-            # Use existing search engine
+            # Use existing search engine to retrieve products
             results = self.search_engine.search(
                 message,
                 filters=filters,
@@ -155,15 +155,27 @@ class ConversationalAgent:
                 use_ai_reranking=True
             )
 
+            # RAG: Pass retrieved products to LLM for intelligent response
             if results['results']:
-                # Generate simple message with actual count
-                count = len(results['results'])
-                if count == 1:
-                    response_message = "I found 1 product for you."
-                else:
-                    response_message = f"I found {count} products for you."
+                # Format retrieved products for context
+                products_context = []
+                for idx, product in enumerate(results['results'], 1):
+                    context_item = f"{idx}. {product['title']}"
+                    if product.get('description'):
+                        context_item += f" - {product['description'][:200]}"
+                    context_item += f" (Price: ${product.get('price', 0):.2f}, Rating: {product.get('rating', 0)}/5)"
+                    products_context.append(context_item)
+
+                products_text = "\n".join(products_context)
+
+                # Generate context-aware response using RAG
+                response_message = b.GenerateProductRecommendations(
+                    user_query=message,
+                    retrieved_products=products_text
+                )
             else:
-                response_message = "I couldn't find any products matching your request."
+                # No products found - provide helpful alternative response
+                response_message = self._generate_no_results_message(message, results.get('refined_query', message))
 
             return {
                 'type': 'product_search',
@@ -357,16 +369,33 @@ Product {idx}:
                 "Upload an image of what you're looking for",
                 "Ask about our available categories"
             ]
-        
+
         categories = list(set(p.get('category', '') for p in products[:3]))
-        
+
         followups = [
             f"Want to see more {categories[0]} products?" if categories else "See more similar products?",
             "Need help comparing these options?",
             "Looking for a specific price range?"
         ]
-        
+
         return followups
+
+    def _generate_no_results_message(self, original_query: str, refined_query: str) -> str:
+        """Generate helpful message when no products are found."""
+        # Get available categories to suggest
+        available_categories = []
+        if self.search_engine and hasattr(self.search_engine, 'get_category_suggestions'):
+            available_categories = self.search_engine.get_category_suggestions()[:5]
+
+        message = f"I couldn't find any products matching '{original_query}'. "
+
+        # Add helpful suggestions
+        if available_categories:
+            message += f"However, I have products in these categories: {', '.join(available_categories)}. "
+
+        message += "Try being more general (e.g., 'shirt' instead of 'red shirt'), or ask about a different product category."
+
+        return message
     
     def get_agent_info(self) -> Dict:
         """Get information about the agent."""
