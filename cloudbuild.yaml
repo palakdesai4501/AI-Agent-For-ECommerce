@@ -37,7 +37,7 @@ steps:
       - '0'
       - '--timeout'
       - '300'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'CORS_ORIGINS=*'
 
 images:

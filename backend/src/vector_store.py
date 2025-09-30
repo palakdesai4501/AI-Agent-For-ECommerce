@@ -34,7 +34,16 @@ class VectorStore:
         
         # Initialize embedding model
         print("Loading embedding model...")
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        # Set cache directory and use token if available to avoid rate limits
+        cache_dir = os.getenv('HF_HOME', '/tmp/huggingface_cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        hf_token = os.getenv('HF_TOKEN')
+
+        self.embedding_model = SentenceTransformer(
+            'all-MiniLM-L6-v2',
+            cache_folder=cache_dir,
+            token=hf_token
+        )
         
         # Initialize Pinecone
         self.pc = None
