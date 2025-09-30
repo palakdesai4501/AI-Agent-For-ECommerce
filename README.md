@@ -523,19 +523,196 @@ similar_products = self.vector_store.search_similar_products(
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
+### Live Demo 🌐
+- **Frontend**: [https://ai-agent-for-e-commerce.vercel.app](https://ai-agent-for-e-commerce.vercel.app)
+- **Backend API**: [https://commerce-backend-edxgqpsgua-uc.a.run.app](https://commerce-backend-edxgqpsgua-uc.a.run.app)
+
+---
+
+### Backend Deployment (Google Cloud Run)
+
+#### Prerequisites
+- Google Cloud account with billing enabled
+- gcloud CLI installed and authenticated
+- Docker installed (for local testing)
+
+#### Environment Variables Required
 ```bash
-cd frontend
-npm run build
-vercel deploy
+PINECONE_API_KEY=your_pinecone_api_key
+GEMINI_API_KEY=your_gemini_api_key
+HF_TOKEN=your_huggingface_token  # Optional but recommended to avoid rate limits
+CORS_ORIGINS=*  # Or specify your frontend URL
 ```
 
-### Backend (Railway)
+#### Quick Deploy
 ```bash
-cd backend
-# Add Procfile: web: python api_server.py
-railway up
+# 1. Clone and navigate to project
+git clone https://github.com/yourusername/AIAgent-comerceWebsite.git
+cd AIAgent-comerceWebsite
+
+# 2. Deploy using the deployment script
+./deploy.sh
+
+# The script will:
+# - Build Docker image using Cloud Build (with layer caching for speed)
+# - Push to Google Container Registry
+# - Deploy to Cloud Run with optimized settings
+# - Takes ~5-8 minutes first time, ~30-60 seconds for updates
 ```
+
+#### Manual Deploy (Alternative)
+```bash
+# 1. Set your project ID
+PROJECT_ID="your-project-id"
+gcloud config set project $PROJECT_ID
+
+# 2. Build and push Docker image
+gcloud builds submit --config cloudbuild.yaml
+
+# 3. Set environment variables in Cloud Run console or via CLI:
+gcloud run services update commerce-backend \
+  --region us-central1 \
+  --update-env-vars PINECONE_API_KEY="your_key",GEMINI_API_KEY="your_key",HF_TOKEN="your_token"
+```
+
+#### Cloud Run Configuration
+- **Memory**: 2GB
+- **CPU**: 2 vCPUs
+- **Max Instances**: 10
+- **Timeout**: 300 seconds
+- **Region**: us-central1
+
+#### View Logs
+```bash
+gcloud run services logs read commerce-backend --region us-central1 --limit 50
+```
+
+---
+
+### Frontend Deployment (Vercel)
+
+#### Prerequisites
+- Vercel account (free tier works)
+- GitHub repository connected to Vercel
+
+#### Environment Variables Required
+Create `.env.production` in `frontend/` directory:
+```bash
+VITE_API_BASE_URL=https://your-backend-url.run.app/api
+```
+
+#### Deploy via Vercel Dashboard
+1. Connect your GitHub repository to Vercel
+2. Set **Root Directory** to `frontend`
+3. **Framework Preset**: Vite
+4. **Build Command**: `npm run build`
+5. **Output Directory**: `dist`
+6. Add environment variable `VITE_API_BASE_URL`
+7. Click **Deploy**
+
+#### Deploy via CLI
+```bash
+cd frontend
+
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+
+# Vercel will auto-detect Vite and deploy correctly
+```
+
+#### Auto-Deploy on Push
+- Vercel automatically deploys on every `git push` to main branch
+- Preview deployments created for pull requests
+- Deployment typically takes 1-2 minutes
+
+---
+
+### Deployment Checklist ✅
+
+**Before deploying:**
+- [ ] All API keys added to Cloud Run environment variables
+- [ ] Frontend `.env.production` points to correct backend URL
+- [ ] `data/processed_products.json` exists and is committed to git
+- [ ] Pinecone index created and populated with product vectors
+- [ ] CORS configured to allow frontend domain
+
+**After deploying:**
+- [ ] Test `/health` endpoint: `curl https://your-backend.run.app/health`
+- [ ] Test `/api/agent/info` endpoint to verify data loaded
+- [ ] Test a chat message from frontend
+- [ ] Verify images load correctly on frontend
+- [ ] Check Cloud Run logs for any errors
+
+---
+
+### Troubleshooting
+
+#### Backend Issues
+
+**Problem**: `500 error on /api/agent/info`
+```bash
+# Solution: Ensure search engine is loaded
+# Check logs: gcloud run services logs read commerce-backend --region us-central1
+```
+
+**Problem**: `HuggingFace rate limit error`
+```bash
+# Solution: Add HF_TOKEN environment variable
+gcloud run services update commerce-backend \
+  --region us-central1 \
+  --update-env-vars HF_TOKEN="your_hf_token"
+```
+
+**Problem**: `Data file not found`
+```bash
+# Solution: Ensure data/processed_products.json is in git
+git add -f data/processed_products.json
+git commit -m "Add products data"
+git push
+```
+
+#### Frontend Issues
+
+**Problem**: JavaScript files returning HTML (MIME type error)
+```bash
+# Solution: Update vercel.json to use rewrites instead of routes
+# Already fixed in latest version
+```
+
+**Problem**: API calls failing (CORS error)
+```bash
+# Solution: Verify VITE_API_BASE_URL in .env.production
+# Ensure backend CORS_ORIGINS includes your frontend URL
+```
+
+**Problem**: Images not loading
+```bash
+# Solution: Ensure frontend/public/ is not in .gitignore
+# Commit all assets in public folder
+```
+
+---
+
+### Deployment Costs 💰
+
+**Google Cloud Run (Backend)**
+- Free tier: 2 million requests/month
+- Typical usage: ~$5-20/month depending on traffic
+- Scales to zero when not in use
+
+**Vercel (Frontend)**
+- Free tier: 100GB bandwidth/month
+- Unlimited deployments
+- Perfect for personal projects
+
+**Pinecone (Vector Database)**
+- Starter (free): 1 index, 100K vectors
+- Sufficient for 800 products with multiple views
+
+**Total**: Can run for **FREE** on free tiers! 🎉
 
 ---
 
