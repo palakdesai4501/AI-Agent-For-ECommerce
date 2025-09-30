@@ -1,12 +1,20 @@
 steps:
-  # Build the container image
+  # Build the container image with caching
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/commerce-backend:$COMMIT_SHA', '.']
-  
-  # Push the container image to Container Registry
+    args:
+      - 'build'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/commerce-backend:latest'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/commerce-backend:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/commerce-backend:latest'
+      - '.'
+
+  # Push the container images to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/commerce-backend:$COMMIT_SHA']
-  
+    args: ['push', '--all-tags', 'gcr.io/$PROJECT_ID/commerce-backend']
+
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -15,7 +23,7 @@ steps:
       - 'deploy'
       - 'commerce-backend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/commerce-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/commerce-backend:$SHORT_SHA'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -27,5 +35,17 @@ steps:
       - '2'
       - '--max-instances'
       - '10'
+      - '--min-instances'
+      - '0'
+      - '--timeout'
+      - '300'
       - '--set-env-vars'
       - 'CORS_ORIGINS=*'
+
+images:
+  - 'gcr.io/$PROJECT_ID/commerce-backend:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/commerce-backend:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY

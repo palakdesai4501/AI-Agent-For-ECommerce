@@ -370,6 +370,8 @@ Product {idx}:
     
     def get_agent_info(self) -> Dict:
         """Get information about the agent."""
+        # Ensure search engine is loaded before accessing it
+        self._ensure_search_engine()
         return {
             'name': self.agent_name,
             'description': self.agent_description,
@@ -379,8 +381,8 @@ Product {idx}:
                 'Image-based product search',
                 'Product comparison and explanations'
             ],
-            'available_categories': self.search_engine.get_category_suggestions(),
-            'total_products': len(self.search_engine.products_data)
+            'available_categories': self.search_engine.get_category_suggestions() if self.search_engine else [],
+            'total_products': len(self.search_engine.products_data) if self.search_engine else 0
         }
     
     def explain_product(self, product_id: str, user_query: str) -> str:
