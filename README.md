@@ -357,22 +357,73 @@ Navigate to `http://localhost:5173` and start chatting with Cartly!
 
 ## 🎮 Usage
 
-### Text Search
+### 💬 General Conversation
+Chat naturally with Cartly to learn about its capabilities:
+
+**Example Questions:**
 ```
-You: "Find me wireless headphones under $50"
-Cartly: "I found 3 products for you."
-[Displays 3 relevant headphone products with images]
+"What's your name?"
+"What can you do?"
+"Which categories of products do you have?"
+"Tell me about your capabilities"
 ```
 
-### Image Search
+**Response:**
+```
+Cartly: "Hi! I'm Cartly, your AI shopping assistant. I can help you find products
+by describing what you need, search for products based on images you upload, and
+have general conversations about shopping. I have access to 800 curated products
+from 20+ categories including Electronics, Fashion, Home, Sports, and more!"
+```
+
+---
+
+### 🔍 Text-Based Product Search
+Ask for products using natural language:
+
+**Example Queries:**
+```
+"Find me wireless headphones under $50"
+"Show me running shoes for women"
+"I need a coffee maker"
+"Recommend a laptop for students"
+"Looking for yoga mats"
+```
+
+**Response:**
+```
+Cartly: "I found 3 products for you."
+[Displays 3 relevant products with images, prices, and ratings]
+```
+
+---
+
+### 📸 Image-Based Product Search
+
+Upload a product image and Cartly will find similar items in the catalog.
+
+**How to Use:**
 1. Click the **"+"** button in the input bar
 2. Select **"Upload Image"**
 3. Choose a product image (PNG/JPG, max 10MB)
+   - **Tip:** You can download product images from the catalog results and re-upload them to find similar products!
+   - Or use any product image from the web
 4. Click **Send** or press Enter
-5. Cartly analyzes the image and finds similar products
+5. Cartly analyzes the image and finds visually similar products
 
-### Follow-up Questions
-Click on suggested questions below agent responses to continue the conversation.
+**Example:**
+```
+[Upload image of a blue backpack]
+Cartly: "I found 3 similar products for you."
+[Displays backpacks with similar style, color, and features]
+```
+
+**Pro Tip:** For best results, use clear product images with good lighting and minimal background clutter.
+
+---
+
+### 💡 Follow-up Questions
+Click on suggested questions below agent responses to continue the conversation and refine your search.
 
 ---
 
