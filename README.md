@@ -514,7 +514,7 @@ similar_products = self.vector_store.search_similar_products(
 ## 🚀 Deployment
 
 ### Live Demo 🌐
-- **Frontend**: [https://ai-agent-for-e-commerce.vercel.app](https://ai-agent-for-e-commerce.vercel.app)
+- **Frontend**: [https://cartly-commerce-agent.vercel.app](https://cartly-commerce-agent.vercel.app)
 - **Backend API**: [https://commerce-backend-edxgqpsgua-uc.a.run.app](https://commerce-backend-edxgqpsgua-uc.a.run.app)
 
 ---
