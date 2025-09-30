@@ -358,28 +358,17 @@ Navigate to `http://localhost:5173` and start chatting with Cartly!
 ## 🎮 Usage
 
 ### 💬 General Conversation
-Chat naturally with Cartly to learn about its capabilities:
 
 **Example Questions:**
 ```
 "What's your name?"
 "What can you do?"
 "Which categories of products do you have?"
-"Tell me about your capabilities"
-```
-
-**Response:**
-```
-Cartly: "Hi! I'm Cartly, your AI shopping assistant. I can help you find products
-by describing what you need, search for products based on images you upload, and
-have general conversations about shopping. I have access to 800 curated products
-from 20+ categories including Electronics, Fashion, Home, Sports, and more!"
 ```
 
 ---
 
 ### 🔍 Text-Based Product Search
-Ask for products using natural language:
 
 **Example Queries:**
 ```
@@ -387,103 +376,28 @@ Ask for products using natural language:
 "Show me running shoes for women"
 "I need a coffee maker"
 "Recommend a laptop for students"
-"Looking for yoga mats"
-```
-
-**Response:**
-```
-Cartly: "I found 3 products for you."
-[Displays 3 relevant products with images, prices, and ratings]
 ```
 
 ---
 
 ### 📸 Image-Based Product Search
 
-Upload a product image and Cartly will find similar items in the catalog.
-
 **How to Use:**
 1. Click the **"+"** button in the input bar
 2. Select **"Upload Image"**
 3. Choose a product image (PNG/JPG, max 10MB)
-   - **Tip:** You can download product images from the catalog results and re-upload them to find similar products!
-   - Or use any product image from the web
-4. Click **Send** or press Enter
-5. Cartly analyzes the image and finds visually similar products
+   - **Tip:** Download product images from catalog results and re-upload them to find similar products
+4. Click **Send** to search
 
-**Example:**
-```
-[Upload image of a blue backpack]
-Cartly: "I found 3 similar products for you."
-[Displays backpacks with similar style, color, and features]
-```
-
-**Pro Tip:** For best results, use clear product images with good lighting and minimal background clutter.
+**Pro Tip:** Use clear product images with good lighting for best results.
 
 ---
 
-### 💡 Follow-up Questions
-Click on suggested questions below agent responses to continue the conversation and refine your search.
+## 🔌 API Endpoints
 
----
-
-## 🔌 API Documentation
-
-### `POST /api/chat`
-
-Send a message to the AI agent.
-
-**Request:**
-```json
-{
-  "message": "Find wireless headphones",
-  "image": "data:image/jpeg;base64,/9j/4AAQ..." // optional base64
-}
-```
-
-**Response:**
-```json
-{
-  "type": "product_search",
-  "message": "I found 3 products for you.",
-  "products": [
-    {
-      "id": "B08XYZ123",
-      "title": "Sony Wireless Headphones WH-1000XM4",
-      "category": "All Electronics",
-      "price": 348.0,
-      "rating": 4.7,
-      "rating_count": 89234,
-      "image_url": "https://...",
-      "description": "Industry-leading noise canceling...",
-      "similarity_score": 0.89
-    }
-  ],
-  "follow_up_questions": [
-    "Would you like to see more similar products?",
-    "Are you looking for a specific price range?"
-  ]
-}
-```
-
-### `GET /api/agent-info`
-
-Get agent metadata.
-
-**Response:**
-```json
-{
-  "name": "Cartly",
-  "description": "AI Shopping Assistant",
-  "total_products": 800,
-  "available_categories": [
-    "All Electronics",
-    "AMAZON FASHION",
-    "Sports & Outdoors",
-    "..."
-  ]
-}
-```
+- `POST /api/chat` - Send chat message (text/image)
+- `GET /api/agent/info` - Get agent capabilities and categories
+- `GET /health` - Health check
 
 ---
 
@@ -529,46 +443,6 @@ similar_products = self.vector_store.search_similar_products(
 - `0.5-0.7`: Moderately similar (related products)
 - `0.35-0.5`: Somewhat related
 - `< 0.35`: Filtered out (not relevant)
-
----
-
-## 🎨 UI/UX Design
-
-### Color Palette
-```css
---bg-primary: #F2F2F2;    /* Light gray background */
---bg-accent: #EAE4D5;     /* Warm beige accents */
---border: #B6B09F;        /* Taupe borders */
---text: #000000;          /* Black text */
---white: #FFFFFF;         /* Pure white for cards */
-```
-
-### Design Principles
-- **Minimalistic**: Clean, uncluttered interface
-- **Conversation-first**: ChatGPT-like chat experience
-- **Visual hierarchy**: Clear separation between messages and products
-- **Responsive**: Mobile-first, works on all screen sizes
-- **Accessible**: High contrast, clear typography
-
----
-
-## 📊 Performance
-
-- **Search latency**: < 500ms (vector search)
-- **Image analysis**: 1-2 seconds (Gemini Vision)
-- **Embedding generation**: < 100ms (local model)
-- **Catalog size**: 800 products indexed
-- **Vector dimensions**: 384 (optimized for speed)
-
----
-
-## 🔒 Security
-
-- ✅ API keys stored in environment variables
-- ✅ CORS configured for frontend-backend communication
-- ✅ Input validation on all endpoints
-- ✅ File upload restrictions (10MB, PNG/JPG only)
-- ✅ No sensitive data logged
 
 ---
 
@@ -767,19 +641,22 @@ git push
 
 ---
 
-## 📝 License
+## 🔮 Future Improvements
 
-MIT License - see [LICENSE](LICENSE) file for details.
+### Fine-Grained Attribute Matching
+Currently, the RAG system retrieves semantically similar products but may not always capture highly specific attributes like exact colors, materials, or detailed specifications. For example:
 
----
+- Query: "red t-shirt" → May return general t-shirts instead of only red ones
+- Query: "leather jacket size XL" → May return leather jackets but not filter by size
 
-## 🙏 Acknowledgments
+**Planned Enhancements:**
+1. **Attribute Extraction Layer**: Add NER (Named Entity Recognition) to extract specific attributes (color, size, brand, material) from user queries
+2. **Hybrid Search**: Combine vector similarity with structured metadata filtering for precise attribute matching
+3. **Query Expansion**: Automatically expand queries with synonyms and related terms (e.g., "crimson" → "red", "scarlet")
+4. **Reranking with Attributes**: Implement attribute-aware reranking that prioritizes products matching specific constraints
+5. **Improved Embeddings**: Fine-tune the embedding model on e-commerce product data to better capture product-specific semantics
 
-- [Google Gemini](https://ai.google.dev/) - AI capabilities
-- [Pinecone](https://www.pinecone.io/) - Vector search infrastructure
-- [BAML](https://www.boundaryml.com/) - LLM function management
-- [Sentence Transformers](https://www.sbert.net/) - Embedding models
-- [Amazon Product Data](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/) - Product catalog
+These improvements will make the system more reliable for attribute-specific searches while maintaining its current strength in semantic understanding.
 
 ---
 
