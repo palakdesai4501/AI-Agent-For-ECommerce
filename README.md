@@ -393,11 +393,76 @@ Navigate to `http://localhost:5173` and start chatting with Cartly!
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Documentation
 
-- `POST /api/chat` - Send chat message (text/image)
-- `GET /api/agent/info` - Get agent capabilities and categories
-- `GET /health` - Health check
+### Base URL
+- **Production**: `https://commerce-backend-edxgqpsgua-uc.a.run.app`
+- **Local**: `http://localhost:5000`
+
+### Endpoints
+
+#### `POST /api/chat`
+Send a chat message to the AI agent (text or image-based).
+
+**Request Body:**
+```json
+{
+  "message": "Find me wireless headphones",
+  "image": "base64_encoded_image_string",  // Optional
+  "filters": {                              // Optional
+    "category": "All Electronics",
+    "min_price": 10.0,
+    "max_price": 100.0,
+    "min_rating": 4.0
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "type": "product_search",  // or "conversation", "image_search", "error"
+  "message": "Agent response text",
+  "products": [
+    {
+      "id": "B08XYZ123",
+      "title": "Product Title",
+      "description": "Product description",
+      "category": "Category Name",
+      "price": 99.99,
+      "rating": 4.5,
+      "rating_count": 1234,
+      "image_url": "https://...",
+      "similarity_score": 0.85
+    }
+  ],
+  "follow_up_questions": ["Question 1", "Question 2"]
+}
+```
+
+#### `GET /api/agent/info`
+Get agent metadata and available categories.
+
+**Response:**
+```json
+{
+  "name": "Cartly",
+  "description": "AI Shopping Assistant",
+  "capabilities": ["General conversation", "Product recommendations", "Image search"],
+  "available_categories": ["All Electronics", "AMAZON FASHION", ...],
+  "total_products": 800
+}
+```
+
+#### `GET /health`
+Health check endpoint.
+
+**Response:**
+```json
+{
+  "status": "healthy"
+}
+```
 
 ---
 
