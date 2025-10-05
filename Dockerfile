@@ -25,7 +25,7 @@ COPY backend/ .
 
 # Copy the data file (create directory first)
 RUN mkdir -p data
-COPY data/processed_products.json data/
+COPY backend/data/processed_products.json data/
 
 # Create temp directory
 RUN mkdir -p temp
