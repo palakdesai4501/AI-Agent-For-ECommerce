@@ -1,6 +1,6 @@
 import type { ChatRequest, AgentResponse, AgentInfo } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL as string | undefined) || 'http://localhost:5000/api';
 
 export async function chatWithAgent(request: ChatRequest): Promise<AgentResponse> {
   const response = await fetch(`${API_BASE_URL}/chat`, {

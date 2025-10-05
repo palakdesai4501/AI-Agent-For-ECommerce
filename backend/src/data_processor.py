@@ -23,12 +23,12 @@ class AmazonDataProcessor:
         'meta_Pet_Supplies'
     ]
     
-    def __init__(self, target_size: int = 800):
+    def __init__(self, target_size: int = 250):
         """
         Initialize processor with target dataset size.
-        
+
         Args:
-            target_size: Target number of products (500-1000 recommended)
+            target_size: Target number of products (250 recommended for quality)
         """
         self.target_size = target_size
         self.processed_data = []
@@ -78,40 +78,44 @@ class AmazonDataProcessor:
     def _apply_quality_filters(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Apply quality filters to ensure good product data.
-        
+
         Args:
             df: DataFrame to filter
-            
+
         Returns:
             Filtered DataFrame
         """
         # Filter criteria for quality products
         filtered = df[
             # Must have title and description
-            (df['title'].notna()) & 
+            (df['title'].notna()) &
             (df['description'].notna()) &
             (df['title'].str.len() > 10) &
             (df['description'].str.len() > 20) &
-            
-            # Must have some rating data (indicates real products)
+
+            # Must have significant rating data (indicates popular, real products)
             (df['rating_number'].notna()) &
-            (df['rating_number'] > 0) &
+            (df['rating_number'] >= 50) &
             (df['average_rating'].notna()) &
-            
+
             # Must have main category
             (df['main_category'].notna()) &
-            
+
             # Must have image
             (df['image'].notna()) &
-            
-            # Filter out products with very low ratings (likely problematic)
-            (df['average_rating'] >= 3.0)
+
+            # Filter out products with low ratings
+            (df['average_rating'] >= 3.5)
         ].copy()
-        
+
+        # Remove duplicates (keep highest rated product for duplicate titles)
+        filtered = filtered.sort_values('average_rating', ascending=False)
+        filtered = filtered.drop_duplicates(subset=['title'], keep='first')
+
         # Sort by rating quality (number of ratings * average rating)
         filtered['quality_score'] = filtered['rating_number'] * filtered['average_rating']
         filtered = filtered.sort_values('quality_score', ascending=False)
-        
+
         return filtered
     
     def _stratified_sample(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -170,26 +174,17 @@ class AmazonDataProcessor:
                 product = {
                     'id': row['parent_asin'],
                     'title': str(row['title']).strip(),
-                    'description': str(row['description']).strip()[:500],  # Limit description length
+                    'description': str(row['description']).strip(),
                     'category': str(row['main_category']) if pd.notna(row['main_category']) else 'Unknown',
-                    'subcategories': row['categories'] if isinstance(row['categories'], list) else [],
                     'store': str(row['store']) if pd.notna(row['store']) else None,
                     'price': float(row['price']) if pd.notna(row['price']) else None,
                     'rating': float(row['average_rating']) if pd.notna(row['average_rating']) else None,
                     'rating_count': int(row['rating_number']) if pd.notna(row['rating_number']) else 0,
-                    'features': row['features'] if isinstance(row['features'], list) else [],
                     'image_url': str(row['image']) if pd.notna(row['image']) else None,
                     'filename': row['filename'],
                     'date_available': str(row['date_first_available']) if pd.notna(row['date_first_available']) else None
                 }
-                
-                # Create search text for embeddings
-                search_text = f"{product['title']} {product['description']}"
-                if product['features']:
-                    search_text += " " + " ".join(product['features'][:3])  # Limit features
-                
-                product['search_text'] = search_text.strip()
-                
+
                 processed.append(product)
                 
             except Exception as e:
@@ -256,7 +251,7 @@ def main():
     """
     Main function to process and save Amazon data.
     """
-    processor = AmazonDataProcessor(target_size=800)
+    processor = AmazonDataProcessor(target_size=250)
     
     # Load and process data
     products = processor.load_and_filter_data()

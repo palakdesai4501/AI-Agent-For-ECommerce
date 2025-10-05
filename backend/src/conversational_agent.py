@@ -1,14 +1,40 @@
+"""
+Conversational Agent for E-Commerce Product Search
+
+Unified AI agent that handles:
+    1. General conversation (agent info, capabilities, shopping advice)
+    2. Text-based product search (semantic similarity using RAG)
+    3. Image-based product search (vision AI → semantic search)
+
+The agent uses:
+    - Google Gemini 2.0 for vision analysis and conversation
+    - BAML for type-safe LLM function calls
+    - Pinecone + sentence-transformers for semantic product search
+    - SearchEngine for vector similarity search and product retrieval
+
+Key Flow:
+    User Input → HandleUserQuery (BAML) → Intent Classification
+        ├─ GENERAL_CONVERSATION → Direct response
+        ├─ PRODUCT_RECOMMENDATION → Text search → RAG response
+        └─ IMAGE_SEARCH → Vision analysis → Query extraction → Text search → Results
+"""
+
 import os
 import base64
 from typing import Dict, List, Optional, Union
 from PIL import Image
 import io
+import logging
 from dotenv import load_dotenv
 import google.generativeai as genai
 from baml_client import b
 from src.search_engine import SearchEngine
 
 load_dotenv()
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
 class ConversationalAgent:
     """
     Unified AI agent that handles general conversation, text-based product recommendations,
@@ -17,8 +43,6 @@ class ConversationalAgent:
     
     def __init__(self):
         """Initialize the conversational agent with search capabilities."""
-        # Use correct data path when running from backend directory
-        import os
         data_path = os.path.join('data', 'processed_products.json')
         self.search_engine = None  # Lazy load
         self.data_path = data_path
@@ -81,7 +105,24 @@ class ConversationalAgent:
             })
 
             intent = directive.intent if isinstance(directive, dict) else getattr(directive, "intent", None)
-            print(f"Agent Intent: {intent}")
+            logger.info(f"Agent intent classified: {intent}")
+
+            # Extract filters from BAML directive (price, rating, category)
+            extracted_filters = {}
+            if hasattr(directive, 'min_price') and directive.min_price:
+                extracted_filters['min_price'] = directive.min_price
+            if hasattr(directive, 'max_price') and directive.max_price:
+                extracted_filters['max_price'] = directive.max_price
+            if hasattr(directive, 'min_rating') and directive.min_rating:
+                extracted_filters['min_rating'] = directive.min_rating
+            if hasattr(directive, 'category') and directive.category:
+                extracted_filters['category'] = directive.category
+
+            # Merge with user-provided filters (user filters take precedence)
+            merged_filters = {**extracted_filters, **(filters or {})}
+
+            if merged_filters:
+                logger.info(f"Applied filters: {merged_filters}")
 
             if intent == "GENERAL_CONVERSATION":
                 reply = directive.get("reply") if isinstance(directive, dict) else getattr(directive, "reply", None)
@@ -99,12 +140,18 @@ class ConversationalAgent:
             # Text product recommendation
             if intent == "PRODUCT_RECOMMENDATION":
                 refined_query = directive.get("refined_query") if isinstance(directive, dict) else getattr(directive, "refined_query", None)
-                return self._handle_product_search(refined_query or message, filters)
+                return self._handle_product_search(refined_query or message, merged_filters)
 
             # Image search
             if intent == "IMAGE_SEARCH":
                 refined_query = directive.get("refined_query") if isinstance(directive, dict) else getattr(directive, "refined_query", None)
-                return self._handle_image_search(image, refined_query or image_description or message, filters)
+                # Pass image_description for simplification
+                return self._handle_image_search(
+                    image,
+                    refined_query or image_description or message,
+                    merged_filters,
+                    image_description=image_description  # Pass description for query simplification
+                )
 
             # Fallback
             return self._handle_product_search(message, filters)
@@ -151,8 +198,7 @@ class ConversationalAgent:
             results = self.search_engine.search(
                 message,
                 filters=filters,
-                top_k=3,
-                use_ai_reranking=True
+                top_k=3
             )
 
             # RAG: Pass retrieved products to LLM for intelligent response
@@ -197,40 +243,44 @@ class ConversationalAgent:
     def _handle_image_search(self,
                            image: Union[str, bytes, Image.Image],
                            refined_hint: Optional[str] = None,
-                           filters: Optional[Dict] = None) -> Dict:
+                           filters: Optional[Dict] = None,
+                           image_description: Optional[str] = None) -> Dict:
         """Handle image-based product search."""
         try:
-            image_description = None
             search_query = None
 
-            if refined_hint:
-                # We already have a refined query/description from the entrypoint
-                search_query = refined_hint
-            else:
-                # Convert image to proper format for Gemini and analyze
+            # Use provided image_description or analyze image
+            if not image_description:
                 image_data = self._prepare_image_for_analysis(image)
                 image_description = self._analyze_image_content(image_data)
 
-                # Use BAML to convert structured description into focused search query
-                try:
-                    search_query = b.AnalyzeProductImage(image_description)
-                    print(f"Image analysis:\n{image_description}")
-                    print(f"Refined search query: {search_query}")
-                except Exception as baml_error:
-                    print(f"BAML refinement failed: {baml_error}, using description directly")
-                    search_query = image_description
+            logger.info("Image analyzed successfully")
 
-            print(f"Final search query: {search_query}")
+            # Build semantic search query from image description
+            # Extract key attributes and create a rich, semantic query
+            product_type = self._extract_product_type(image_description) or "product"
+            target_audience = self._extract_target_audience(image_description)
+            category = self._extract_category(image_description)
 
-            # Search for similar products
-            print(f"🔍 Searching for: '{search_query}'")
+            # Build query: product_type + target_audience + category (if relevant)
+            query_parts = []
+            if target_audience:
+                query_parts.append(target_audience)
+            query_parts.append(product_type)
+            if category and category not in ['miscellaneous', 'general']:
+                query_parts.append(category)
+
+            search_query = ' '.join(query_parts)
+            logger.info(f"Image search query generated: {search_query}")
+
+            # Search with low threshold for better recall
             results = self.search_engine.search(
                 search_query,
-                filters=filters,
+                filters=None,  # Don't apply filters for image search
                 top_k=3,
-                use_ai_reranking=False
+                min_similarity=0.10  # Low threshold for image-based searches
             )
-            print(f"📊 Search results: {len(results.get('results', []))} products found")
+            logger.info(f"Image search returned {len(results.get('results', []))} products")
 
             if results['results']:
                 # Generate simple message with actual count
@@ -286,7 +336,7 @@ class ConversationalAgent:
         try:
             # Ensure vision model is loaded
             self._ensure_vision_model()
-            
+
             # Prepare image for Gemini
             image_part = {
                 "mime_type": "image/jpeg",
@@ -312,31 +362,114 @@ class ConversationalAgent:
             return response.text.strip()
 
         except Exception as e:
-            print(f"Error analyzing image: {e}")
+            logger.error(f"Error analyzing image with Gemini Vision: {e}")
             return "Product type: general item\nCategory: miscellaneous"
-    
-    def _format_products_for_context(self, products: List[Dict]) -> str:
-        """Format products into a structured context string for LLM analysis."""
-        if not products:
-            return "No products retrieved."
 
-        context_parts = []
-        for idx, product in enumerate(products, 1):
-            product_info = f"""
-Product {idx}:
-- ID: {product.get('id', 'N/A')}
-- Title: {product.get('title', 'N/A')}
-- Category: {product.get('category', 'N/A')}
-- Store/Brand: {product.get('store', 'N/A')}
-- Price: ${product.get('price', 'N/A')}
-- Rating: {product.get('rating', 'N/A')}/5.0 ({product.get('rating_count', 0)} reviews)
-- Description: {product.get('description', 'N/A')[:300]}...
-- Features: {', '.join(product.get('features', [])[:5]) if product.get('features') else 'None listed'}
-- Similarity Score: {product.get('similarity_score', 0):.3f}
-""".strip()
-            context_parts.append(product_info)
+    def _extract_product_type(self, image_description: str) -> Optional[str]:
+        """Extract just the product type from image description for fallback search."""
+        try:
+            # Parse the structured description (handles both "Product Type:" and "- Product Type:")
+            for line in image_description.split('\n'):
+                line_stripped = line.strip().lstrip('-').strip()
+                if line_stripped.lower().startswith('product type:'):
+                    product_type = line_stripped.split(':', 1)[1].strip()
+                    return product_type
+            return None
+        except Exception:
+            return None
 
-        return "\n\n".join(context_parts)
+    def _extract_category(self, image_description: str) -> Optional[str]:
+        """Extract category from image description."""
+        try:
+            for line in image_description.split('\n'):
+                line_stripped = line.strip().lstrip('-').strip()
+                if line_stripped.lower().startswith('category:'):
+                    category = line_stripped.split(':', 1)[1].strip()
+                    return category
+            return None
+        except Exception:
+            return None
+
+    def _extract_target_audience(self, image_description: str) -> Optional[str]:
+        """Extract target audience from image description."""
+        try:
+            for line in image_description.split('\n'):
+                line_stripped = line.strip().lstrip('-').strip()
+                if line_stripped.lower().startswith('target audience:'):
+                    audience = line_stripped.split(':', 1)[1].strip().lower()
+                    # Simplify audience terms
+                    if 'women' in audience or 'female' in audience:
+                        return "women's"
+                    elif 'men' in audience or 'male' in audience:
+                        return "men's"
+                    elif 'kid' in audience or 'child' in audience:
+                        return "kids"
+            return None
+        except Exception:
+            return None
+
+    def _simplify_image_query(self, image_description: str, baml_query: str) -> str:
+        """
+        Aggressively simplify image search query to maximize catalog matches.
+        Removes colors, brands, and overly specific attributes.
+        """
+        # Extract key info from structured description
+        product_type = None
+        target_audience = None
+        category = None
+
+        for line in image_description.split('\n'):
+            line_lower = line.lower()
+            if line_lower.startswith('product type:'):
+                product_type = line.split(':', 1)[1].strip()
+            elif line_lower.startswith('target audience:'):
+                target_audience = line.split(':', 1)[1].strip().lower()
+            elif line_lower.startswith('category:'):
+                category = line.split(':', 1)[1].strip().lower()
+
+        # Build simplified query: [audience] + [product_type] + [category if relevant]
+        query_parts = []
+
+        # Add target audience if specified and relevant
+        if target_audience and target_audience not in ['unisex', 'adults', 'general']:
+            # Simplify audience terms
+            if 'women' in target_audience or 'female' in target_audience:
+                query_parts.append("women's")
+            elif 'men' in target_audience or 'male' in target_audience:
+                query_parts.append("men's")
+            elif 'kid' in target_audience or 'child' in target_audience:
+                query_parts.append("kids")
+
+        # Add product type (REQUIRED)
+        if product_type:
+            # Remove brand names, colors, materials from product type
+            product_clean = product_type.lower()
+            # Remove common brand indicators
+            for brand_word in ['nike', 'adidas', 'just so', 'apple', 'samsung', 'sony']:
+                product_clean = product_clean.replace(brand_word, '')
+            # Remove color words
+            for color in ['black', 'white', 'red', 'blue', 'pink', 'coral', 'peach', 'gray', 'grey', 'green', 'yellow', 'purple']:
+                product_clean = product_clean.replace(color, '')
+            product_clean = ' '.join(product_clean.split())  # Remove extra spaces
+            query_parts.append(product_clean)
+        else:
+            query_parts.append("product")
+
+        # Add broad category hint if helpful
+        if category and category in ['clothing', 'electronics', 'shoes', 'footwear']:
+            if category == 'footwear':
+                category = 'shoes'
+            if category not in ' '.join(query_parts):
+                query_parts.append(category)
+
+        simplified = ' '.join(query_parts).strip()
+
+        # Final cleanup: limit to 3-4 words max
+        words = simplified.split()
+        if len(words) > 4:
+            simplified = ' '.join(words[:4])
+
+        return simplified if simplified else "product"
 
     def _generate_conversation_followups(self, message: str) -> List[str]:
         """Generate follow-up questions for general conversation."""
@@ -468,25 +601,3 @@ class AgentAPI:
     def explain_product(self, product_id: str, query: str) -> str:
         """Get product explanation."""
         return self.agent.explain_product(product_id, query)
-
-
-if __name__ == "__main__":
-    # Test the conversational agent
-    agent = ConversationalAgent()
-    
-    test_cases = [
-        "What's your name?",
-        "What can you do?",
-        "Find me wireless headphones",
-        "I need running shoes for women",
-        "Recommend a coffee maker under $100"
-    ]
-    
-    for query in test_cases:
-        print(f"\n🗣️ User: {query}")
-        response = agent.process_message(query)
-        print(f"🤖 {response['message']}")
-        if response.get('products'):
-            print(f"   Found {len(response['products'])} products")
-        if response.get('follow_up_questions'):
-            print(f"   Suggestions: {response['follow_up_questions']}")

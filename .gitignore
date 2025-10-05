@@ -134,6 +134,11 @@ dist
 # Temporary folders
 tmp/
 temp/
+backend/temp/
+
+# Claude Code AI files
+CLAUDE.md
+claude.md
 
 # API Keys and sensitive data
 *.key

@@ -1,11 +1,31 @@
+"""
+Vector Store for E-Commerce Product Search
+
+Manages vector embeddings and similarity search using:
+    - Pinecone: Serverless vector database for fast similarity search
+    - sentence-transformers: all-MiniLM-L6-v2 model for 384-dim embeddings
+    - Multi-view indexing: Each product gets 2 views (title+category, title+description)
+
+The vector store handles:
+    1. Embedding generation for products and queries
+    2. Upserting products to Pinecone with metadata
+    3. Similarity search with filters (price, rating, category)
+    4. Result deduplication and ranking
+"""
+
 import json
 import os
+import logging
 from typing import List, Dict, Tuple, Optional
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import pinecone
 from pinecone import Pinecone
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 class VectorStore:
     """
@@ -33,17 +53,18 @@ class VectorStore:
         self.embed_batch_size = embed_batch_size
         
         # Initialize embedding model
-        print("Loading embedding model...")
-        # Set cache directory and use token if available to avoid rate limits
+        # all-MiniLM-L6-v2: Lightweight model (90MB), 384 dimensions, good for semantic search
+        logger.info("Loading embedding model (all-MiniLM-L6-v2)...")
         cache_dir = os.getenv('HF_HOME', '/tmp/huggingface_cache')
         os.makedirs(cache_dir, exist_ok=True)
-        hf_token = os.getenv('HF_TOKEN')
+        hf_token = os.getenv('HF_TOKEN')  # Optional, prevents rate limits
 
         self.embedding_model = SentenceTransformer(
             'all-MiniLM-L6-v2',
             cache_folder=cache_dir,
             token=hf_token
         )
+        logger.info("Embedding model loaded successfully")
         
         # Initialize Pinecone
         self.pc = None
@@ -81,10 +102,10 @@ class VectorStore:
             
             # Connect to index
             self.index = self.pc.Index(self.index_name)
-            print(f"Connected to Pinecone index: {self.index_name}")
-            
+            logger.info(f"Connected to Pinecone index: {self.index_name}")
+
         except Exception as e:
-            print(f"Error initializing Pinecone: {e}")
+            logger.error(f"Error initializing Pinecone: {e}")
             raise
     
     def create_embeddings(self, texts: List[str]) -> np.ndarray:
@@ -125,40 +146,31 @@ class VectorStore:
         title = product.get('title') or ''
         description = product.get('description') or ''
         category = product.get('category') or ''
-        subcategories = product.get('subcategories') or []
         store = product.get('store') or ''
         price = product.get('price')
         rating = product.get('rating')
         rating_count = product.get('rating_count') or 0
-        features = product.get('features') or []
         image_url = product.get('image_url') or ''
 
-        taxonomy = " > ".join([category] + subcategories) if subcategories else category
-
-        # View A: title + key features (short)
+        # View A: title + store + category (short, structured)
         view_a_text = "\n".join([
             f"Title: {title}",
             f"Brand/Store: {store}",
-            f"Category: {taxonomy}",
-            f"Key features: {', '.join(features[:6])}" if features else ""
+            f"Category: {category}"
         ]).strip()
 
-        # View B: title + short description snippet
-        desc_snippet = description[:600]
+        # View B: title + full description (detailed content)
         view_b_text = "\n".join([
             f"Title: {title}",
-            f"Use-case: {desc_snippet}"
+            f"Description: {description}"
         ]).strip()
 
-        # Optionally view C from search_text if present
-        search_text = product.get('search_text') or ''
         views: List[Dict] = []
         base_metadata = {
             'product_id': product_id,
             'view': '',
             'title': title[:200],
             'category': category,
-            'subcategories': subcategories,
             'store': store[:100],
             'price': price if price is not None else 0.0,
             'price_bucket': self._price_bucket(price if isinstance(price, (int, float)) else None),
@@ -177,13 +189,6 @@ class VectorStore:
             'text': view_b_text,
             'metadata': {**base_metadata, 'view': 'B'}
         })
-
-        if search_text:
-            views.append({
-                'id': f"{product_id}#C",
-                'text': f"Semantic keywords: {search_text[:1000]}",
-                'metadata': {**base_metadata, 'view': 'C'}
-            })
 
         return views
     
@@ -313,41 +318,22 @@ class VectorStore:
             # Sort by score and take top_k unique products
             collapsed = sorted(best_by_product.values(), key=lambda x: x[1], reverse=True)[:top_k]
 
-            # Log similarity scores for debugging
+            # Log top similarity scores for monitoring
             if collapsed:
-                print(f"📊 Top results with scores:")
+                logger.debug(f"Top {len(collapsed[:5])} results with scores:")
                 for i, (prod, score) in enumerate(collapsed[:5], 1):
-                    print(f"   {i}. {prod.get('title', 'Unknown')[:50]} - Score: {score:.3f}")
+                    logger.debug(f"   {i}. {prod.get('title', 'Unknown')[:50]} - Score: {score:.3f}")
 
             return collapsed
             
         except Exception as e:
-            print(f"Error searching products: {e}")
+            logger.error(f"Error searching products: {e}", exc_info=True)
             return []
-    
-    def get_product_by_id(self, product_id: str) -> Optional[Dict]:
-        """
-        Get product by ID from Pinecone.
-        
-        Args:
-            product_id: Product ID to fetch
-            
-        Returns:
-            Product metadata if found, None otherwise
-        """
-        try:
-            result = self.index.fetch(ids=[product_id])
-            if product_id in result['vectors']:
-                return result['vectors'][product_id]['metadata']
-            return None
-        except Exception as e:
-            print(f"Error fetching product {product_id}: {e}")
-            return None
-    
+
     def get_index_stats(self) -> Dict:
         """
         Get Pinecone index statistics.
-        
+
         Returns:
             Dictionary with index statistics
         """
@@ -356,22 +342,6 @@ class VectorStore:
         except Exception as e:
             print(f"Error getting index stats: {e}")
             return {}
-    
-    def clear_index(self) -> bool:
-        """
-        Clear all vectors from the index.
-        
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            # Delete all vectors
-            self.index.delete(delete_all=True)
-            print("Index cleared successfully")
-            return True
-        except Exception as e:
-            print(f"Error clearing index: {e}")
-            return False
 
 
 def setup_vector_store_from_data(data_file: str = "data/processed_products.json") -> VectorStore:

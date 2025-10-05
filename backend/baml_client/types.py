@@ -53,7 +53,10 @@ class AgentDirective(BaseModel):
     intent: ConversationType
     reply: typing.Optional[str] = None
     refined_query: typing.Optional[str] = None
-    user_filters: typing.Optional[str] = None
+    min_price: typing.Optional[float] = None
+    max_price: typing.Optional[float] = None
+    min_rating: typing.Optional[float] = None
+    category: typing.Optional[str] = None
 
 class ProductRecommendation(BaseModel):
     product_id: str

@@ -115,7 +115,7 @@ class AgentDirectiveAst:
     def __init__(self, tb: type_builder.TypeBuilder):
         _tb = tb._tb # type: ignore (we know how to use this private attribute)
         self._bldr = _tb.class_("AgentDirective")
-        self._properties: typing.Set[str] = set([  "intent",  "reply",  "refined_query",  "user_filters",  ])
+        self._properties: typing.Set[str] = set([  "intent",  "reply",  "refined_query",  "min_price",  "max_price",  "min_rating",  "category",  ])
         self._props = AgentDirectiveProperties(self._bldr, self._properties)
 
     def type(self) -> baml_py.FieldType:
@@ -156,8 +156,20 @@ class AgentDirectiveProperties:
         return type_builder.ClassPropertyViewer(self.__bldr.property("refined_query"))
     
     @property
-    def user_filters(self) -> type_builder.ClassPropertyViewer:
-        return type_builder.ClassPropertyViewer(self.__bldr.property("user_filters"))
+    def min_price(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("min_price"))
+    
+    @property
+    def max_price(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("max_price"))
+    
+    @property
+    def min_rating(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("min_rating"))
+    
+    @property
+    def category(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("category"))
     
     
 

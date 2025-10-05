@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import ChatInterface from './components/ChatInterface';
 import { chatWithAgent, getAgentInfo } from './services/api';
-import type { Message, Product, AgentResponse } from './types';
+import type { Message, AgentResponse } from './types';
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [agentInfo, setAgentInfo] = useState<any>(null);
+  const [agentInfo, setAgentInfo] = useState<AgentResponse | null>(null);
 
   const handleSendMessage = async (message: string, image?: string) => {
     if (!message.trim() && !image) return;

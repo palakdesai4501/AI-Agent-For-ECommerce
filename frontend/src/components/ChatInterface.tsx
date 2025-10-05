@@ -8,7 +8,7 @@ interface ChatInterfaceProps {
   products?: Product[];
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFollowUp, products = [] }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, loading, onFollowUp }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
