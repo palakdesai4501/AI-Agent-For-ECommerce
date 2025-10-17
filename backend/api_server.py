@@ -51,10 +51,23 @@ else:
     CORS(app, origins=cors_origins, supports_credentials=True)
     logger.info(f"CORS configured for origins: {cors_origins}")
 
-# Initialize the conversational agent
-# This loads the embedding model, vector store, and product data
-agent = AgentAPI()
-logger.info("Conversational agent initialized successfully")
+# Lazy-initialize the conversational agent to avoid long startup times
+# on platforms that require quick port binding (e.g., Render)
+agent = None
+
+def get_agent():
+    global agent
+    if agent is None:
+        # Clear any cached models to free memory
+        import gc
+        gc.collect()
+        
+        agent = AgentAPI()
+        logger.info("Conversational agent initialized successfully (lazy)")
+        
+        # Force garbage collection after model loading
+        gc.collect()
+    return agent
 
 @app.route('/api/chat', methods=['POST', 'OPTIONS'])
 def chat():
@@ -132,7 +145,7 @@ def chat():
 
         # Process message with conversational agent
         logger.info(f"Processing chat request - Message length: {len(message)}, Has image: {image_path is not None}")
-        response = agent.chat(message, image_path, **filters)
+        response = get_agent().chat(message, image_path, **filters)
 
         # Clean up temporary image file
         if image_path and os.path.exists(image_path):
@@ -157,7 +170,7 @@ def agent_info():
         JSON with agent name, description, capabilities, categories, and product count
     """
     try:
-        info = agent.get_info()
+        info = get_agent().get_info()
         return jsonify(info)
     except Exception as e:
         logger.error(f"Agent info endpoint error: {str(e)}", exc_info=True)
