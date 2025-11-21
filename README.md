@@ -1,3 +1,7 @@
+# Demo
+
+https://github.com/user-attachments/assets/2b32ffff-adb8-4da6-a93c-58f072feeac6
+
 # 🛒 Cartly - AI-Powered E-commerce Shopping Assistant
 
 > An intelligent shopping assistant combining conversational AI, computer vision, and semantic search to help users discover products through natural language and image uploads.
