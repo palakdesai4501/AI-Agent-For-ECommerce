@@ -2,7 +2,7 @@
 
 https://github.com/user-attachments/assets/2b32ffff-adb8-4da6-a93c-58f072feeac6
 
-# 🛒 Cartly - AI-Powered E-commerce Shopping Assistant
+# Cartly - AI-Powered E-commerce Shopping Assistant
 
 > An intelligent shopping assistant combining conversational AI, computer vision, and semantic search to help users discover products through natural language and image uploads.
 
@@ -12,16 +12,16 @@ https://github.com/user-attachments/assets/2b32ffff-adb8-4da6-a93c-58f072feeac6
 
 ---
 
-## ✨ Features
+##  Features
 
-🗣️ **Natural Conversation** - Chat with AI to find products using everyday language
-🖼️ **Image Search** - Upload product photos to find similar items
-🎯 **Smart Matching** - Semantic search with 0.25 similarity threshold filters irrelevant results
-💬 **Clean UI** - ChatGPT-like interface with product cards
+**Natural Conversation** - Chat with AI to find products using everyday language
+**Image Search** - Upload product photos to find similar items
+**Smart Matching** - Semantic search with 0.25 similarity threshold filters irrelevant results
+**Clean UI** - ChatGPT-like interface with product cards
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Backend
 ```bash
@@ -52,7 +52,7 @@ Open `http://localhost:5173` and start chatting!
 
 ---
 
-## 🏗️ How It Works
+## How It Works
 
 ### Text Search
 ```
@@ -72,7 +72,7 @@ Image Upload → Gemini Vision Analysis → Extract Attributes → Semantic Sear
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 backend/
@@ -96,7 +96,7 @@ frontend/
 
 ---
 
-## 💬 Example Queries
+## Example Queries
 
 **General Conversation:**
 ```
@@ -118,7 +118,7 @@ frontend/
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### `POST /api/chat`
 ```json
@@ -150,7 +150,7 @@ Health check for monitoring.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Similarity Threshold
 Edit `backend/src/search_engine.py:73`:
@@ -178,7 +178,7 @@ VITE_API_BASE_URL=https://your-backend-url/api
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 ### Backend (Google Cloud Run)
 ```bash
@@ -205,7 +205,7 @@ gcloud run services update commerce-backend \
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
 **Backend:** Python, Flask, BAML
@@ -214,7 +214,7 @@ gcloud run services update commerce-backend \
 
 ---
 
-## 🔮 Future Improvements
+## Future Improvements
 
 The current RAG system excels at semantic matching but may miss fine-grained attributes (exact colors, sizes, materials).
 
@@ -227,7 +227,7 @@ The current RAG system excels at semantic matching but may miss fine-grained att
 
 ---
 
-## 📊 Cost Estimate
+## Cost Estimate
 
 - **Google Cloud Run**: Free tier → 2M requests/month (est. $5-20/month)
 - **Vercel**: Free tier → 100GB bandwidth/month
